@@ -42,7 +42,7 @@
     "scripts": "lib/**/*.js"
   },
   "scripts": {
-    "build": "yarn -s clean && rollup -c",
+    "build": "npm run clean && rollup -c",
     "build:standalone": "run-s build standalone",
     "check:audit": "yarn audit",
     "check:format": "yarn -s format -c",
