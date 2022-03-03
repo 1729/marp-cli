@@ -4,37 +4,35 @@ html(lang=lang)
     if base
       base(href=base)
 
-    if title
-      title= title
-      meta(property="og:title", content=title)
+    title= "___TITLE___"
+    meta(property="og:title", content="___TITLE___")
 
-      if image
-        meta(property="og:image:alt", content=title)
+    if image
+      meta(property="og:image:alt", content="___TITLE___")
 
     if author
       meta(name="author", content=author)
       meta(property="article:author", content=author)
 
-    if description
-      meta(name="description", content=description)
-      meta(property="og:description", content=description)
+    meta(name="description", content="___DESCRIPTION___")
+    meta(property="og:description", content="___DESCRIPTION___")
 
     if keywords && keywords.length > 1
       meta(name="keywords", content=keywords.join(','))
 
     if url
-      link(rel="canonical", href=url)
-      meta(property="og:url", content=url)
+      link(rel="canonical", href="___URL___")
+      meta(property="og:url", content="___URL___")
 
     if image
-      meta(property="og:image", content=image)
+      meta(property="og:image", content="___IMAGE___")
 
     meta(charset="UTF-8")
     meta(name="viewport", content="width=device-width,height=device-height,initial-scale=1.0")
     meta(name="apple-mobile-web-app-capable", content="yes")
     meta(http-equiv="X-UA-Compatible", content="ie=edge")
     meta(property="og:type", content="website")
-    meta(name="twitter:card", content=title && image ? "summary_large_image" : "summary")
+    meta(name="twitter:card", content="summary_large_image")
 
     block head
       style!= css

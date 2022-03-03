@@ -37,7 +37,9 @@ const bespokeState = (opts: BespokeStateOption = {}) => {
     }
 
     const parseState = (opts: any = { fragment: true }) => {
-      const page = (coerceInt(location.hash.slice(1)) || 1) - 1
+      const parts = location.toString().split('/')
+      const pageParts = parts[parts.length - 1].split('.')
+      const page = (coerceInt(pageParts[0]) || 1) - 1
       const fragment = opts.fragment ? coerceInt(readQuery('f') || '') : null
 
       activateSlide(page, fragment)
@@ -46,10 +48,18 @@ const bespokeState = (opts: BespokeStateOption = {}) => {
     deck.on('fragment', ({ index, fragmentIndex }) => {
       if (internalNavigation) return
 
+      const parts = location.pathname.split('/')
+      parts.pop()
+
+      const newLocation = {
+        ...location,
+        pathname: parts.join('/') + `/${index + 1}`,
+      }
+
       setQuery(
         { f: fragmentIndex === 0 || fragmentIndex.toString() },
         {
-          location: { ...location, hash: `#${index + 1}` },
+          location: newLocation,
           setter: (...args) =>
             options.history
               ? history.pushState(...args)
