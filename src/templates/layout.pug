@@ -6,9 +6,7 @@ html(lang=lang)
 
     title=title
     meta(property="og:title", content="___OG_TITLE___")
-
-    if image
-      meta(property="og:image:alt", content="___OG_TITLE___")
+    meta(property="og:image:alt", content="___OG_TITLE___")
 
     if author
       meta(name="author", content=author)
@@ -20,13 +18,9 @@ html(lang=lang)
     if keywords && keywords.length > 1
       meta(name="keywords", content=keywords.join(','))
 
-    if url
-      link(rel="canonical", href="___URL___")
-      meta(property="og:url", content="___URL___")
-
-    if image
-      meta(property="og:image", content="___IMAGE___")
-
+    link(rel="canonical", href="___URL___")
+    meta(property="og:url", content="___URL___")
+    meta(property="og:image", content="___IMAGE___")
     meta(charset="UTF-8")
     meta(name="viewport", content="width=device-width,height=device-height,initial-scale=1.0")
     meta(name="apple-mobile-web-app-capable", content="yes")
