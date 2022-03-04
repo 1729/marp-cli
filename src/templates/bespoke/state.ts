@@ -39,7 +39,7 @@ const bespokeState = (opts: BespokeStateOption = {}) => {
           deck.slides[index].querySelector('h5') ||
           deck.slides[index].querySelector('h6')
 
-        if (header) document.title = `${deckTitle} | ${header.innerHTML}`
+        if (header) document.title = `${header.innerHTML} | ${deckTitle}`
       }
     }
 
