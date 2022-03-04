@@ -11,6 +11,7 @@ const coerceInt = (ns: string) => {
 
 const bespokeState = (opts: BespokeStateOption = {}) => {
   const options: BespokeStateOption = { history: true, ...opts }
+  const deckTitle = document.title
 
   return (deck) => {
     let internalNavigation = true
@@ -26,14 +27,25 @@ const bespokeState = (opts: BespokeStateOption = {}) => {
       }
     }
 
+    const setPageTitle = (deck, index: number) => {
+      if (index === 0) {
+        document.title = deckTitle
+      } else {
+        const h1 = deck.slides[index].querySelector('h1')
+        if (h1) document.title = `${deckTitle} | ${h1.innerHTML}`
+      }
+    }
+
     const activateSlide = (index: number, fragment: number | null) => {
       const { min, max } = Math
       const { fragments, slides } = deck
       const idx = max(0, min(index, slides.length - 1))
       const frag = max(0, min(fragment || 0, fragments[idx].length - 1))
 
-      if (idx !== deck.slide() || frag !== deck.fragmentIndex)
+      if (idx !== deck.slide() || frag !== deck.fragmentIndex) {
         deck.slide(idx, { fragment: frag })
+        setPageTitle(deck, idx)
+      }
     }
 
     const parseState = (opts: any = { fragment: true }) => {
@@ -50,6 +62,8 @@ const bespokeState = (opts: BespokeStateOption = {}) => {
 
       const parts = location.pathname.split('/')
       parts.pop()
+
+      setPageTitle(deck, index)
 
       const newLocation = {
         ...location,
