@@ -31,8 +31,15 @@ const bespokeState = (opts: BespokeStateOption = {}) => {
       if (index === 0) {
         document.title = deckTitle
       } else {
-        const h1 = deck.slides[index].querySelector('h1')
-        if (h1) document.title = `${deckTitle} | ${h1.innerHTML}`
+        const header =
+          deck.slides[index].querySelector('h1') ||
+          deck.slides[index].querySelector('h2') ||
+          deck.slides[index].querySelector('h3') ||
+          deck.slides[index].querySelector('h4') ||
+          deck.slides[index].querySelector('h5') ||
+          deck.slides[index].querySelector('h6')
+
+        if (header) document.title = `${deckTitle} | ${header.innerHTML}`
       }
     }
 
