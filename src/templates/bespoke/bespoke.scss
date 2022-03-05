@@ -147,7 +147,7 @@ $progress-height: 5px;
     svg.bespoke-marp-slide {
       height: 100%;
       left: 0;
-      position: absolute;
+      position: fixed; // HACK ostn: absolue here *crashes* Safari iOS!
       top: 0;
       width: 100%;
     }
