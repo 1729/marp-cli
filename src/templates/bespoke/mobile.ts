@@ -109,10 +109,10 @@ const bespokeMobile = (deck) => {
             headers.push({
               title,
               figure,
-              pages: [pages.length],
+              pages: [pages.length - 1],
             })
           } else {
-            headers[headers.length - 1].pages.push(pages.length)
+            headers[headers.length - 1].pages.push(pages.length - 1)
           }
         }
       }
