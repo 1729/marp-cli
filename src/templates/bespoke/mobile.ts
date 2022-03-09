@@ -40,7 +40,7 @@ function computeTextFontSize() {
 
   let bestSize = 0
 
-  for (const fontSize of [32, 30, 28, 26, 24, 20, 18, 16, 14, 12, 8]) {
+  for (const fontSize of [28, 26, 24, 20, 18, 16, 14, 12, 8]) {
     sizerContent.setAttribute('style', `font-size: ${fontSize}px`)
     sizerContent.innerText = longest
 
@@ -109,10 +109,10 @@ const bespokeMobile = (deck) => {
             headers.push({
               title,
               figure,
-              pages: [pages.length - 1],
+              pages: [pages.length],
             })
           } else {
-            headers[headers.length - 1].pages.push(pages.length - 1)
+            headers[headers.length - 1].pages.push(pages.length)
           }
         }
       }
@@ -130,9 +130,6 @@ const bespokeMobile = (deck) => {
     spacer.innerHTML = '&nbsp;'
     el.appendChild(spacer)
   }
-
-  console.log(pages)
-  console.log(headers)
 
   const headerView = document.createElement('div')
   headerView.classList.add(`${classPrefix}mobile-headers`)
@@ -191,11 +188,44 @@ const bespokeMobile = (deck) => {
 
   document.body.appendChild(root)
 
+  const performScroll = () => {
+    const pageWidth = pageView.clientWidth
+    const scrollOffset = pageView.scrollLeft
+    const slideSpaceX = scrollOffset / pageWidth
+
+    let headerSpaceX = 0
+
+    for (let i = 0; i < headers.length - 1; i++) {
+      const headerPages = headers[i].pages
+      const headerLastPage = headerPages[headerPages.length - 1]
+      const nextHeaderPages = headers[i + 1].pages
+      const nextHeaderFirstPage = nextHeaderPages[0]
+
+      if (slideSpaceX > headerLastPage && slideSpaceX < nextHeaderFirstPage) {
+        headerSpaceX = i - 1 + (slideSpaceX - (headerLastPage - 1))
+        break
+      }
+
+      if (slideSpaceX > headerLastPage) {
+        headerSpaceX = i + 1
+      }
+    }
+
+    const scroll = Math.floor(headerSpaceX * pageWidth)
+
+    if (headerView.scrollLeft !== scroll) {
+      headerView.scrollLeft = scroll
+    }
+
+    requestAnimationFrame(performScroll)
+  }
+
+  requestAnimationFrame(performScroll)
+
   setTimeout(() => {
     // HACK needed to avoid Safari crash due to excessive layout.
     document.body.classList.remove('loading')
     computeTextFontSize()
   })
 }
-
 export default bespokeMobile

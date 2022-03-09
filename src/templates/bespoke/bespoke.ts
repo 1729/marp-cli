@@ -32,31 +32,38 @@ const bespokeTemplate = (
 ) => {
   setViewMode()
 
-  const key = popQuery('sync') || undefined
-  const deck = bespoke.from(
-    target,
-    parse(
-      //   P  N
-      //[[1, 1, 0], bespokeSync({ key })],
-      //[[1, 1, 1], bespokePresenter(target)],
-      //[[1, 1, 0], bespokeInteractive],
-      [[1, 1, 1], bespokeClasses],
-      //[[1, 0, 0], bespokeInactive()],
-      //[[1, 1, 1], bespokeLoad],
-      //[[1, 1, 1], bespokeState({ history: false })],
-      //[[1, 1, 0], bespokeNavigation()],
-      //[[1, 1, 0], bespokeFullscreen],
-      //[[1, 0, 0], bespokeProgress],
-      //[[1, 1, 0], bespokeTouch()],
-      //[[1, 0, 0], bespokeOSC()],
-      //[[1, 0, 0], bespokeTransition],
-      //[[1, 1, 1], bespokeFragments],
-      //[[1, 1, 0], bespokeWakeLock],
-      [[1, 1, 0], bespokeMobile]
-    )
-  )
+  // Hacky, dispatch based on mobile browser
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
-  return deck
+  if (isMobile) {
+    return bespoke.from(
+      target,
+      parse([[1, 1, 1], bespokeClasses], [[1, 1, 0], bespokeMobile])
+    )
+  } else {
+    const key = popQuery('sync') || undefined
+    return bespoke.from(
+      target,
+      parse(
+        //   P  N
+        [[1, 1, 0], bespokeSync({ key })],
+        [[1, 1, 1], bespokePresenter(target)],
+        [[1, 1, 0], bespokeInteractive],
+        [[1, 1, 1], bespokeClasses],
+        [[1, 0, 0], bespokeInactive()],
+        [[1, 1, 1], bespokeLoad],
+        [[1, 1, 1], bespokeState({ history: false })],
+        [[1, 1, 0], bespokeNavigation()],
+        [[1, 1, 0], bespokeFullscreen],
+        [[1, 0, 0], bespokeProgress],
+        [[1, 1, 0], bespokeTouch()],
+        [[1, 0, 0], bespokeOSC()],
+        [[1, 0, 0], bespokeTransition],
+        [[1, 1, 1], bespokeFragments],
+        [[1, 1, 0], bespokeWakeLock]
+      )
+    )
+  }
 }
 
 export default bespokeTemplate
