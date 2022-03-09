@@ -21,6 +21,10 @@ $progress-height: 5px;
     overflow: hidden;
   }
 
+  body.loading {
+    display: none;
+  }
+
   // Common visibility control for slides
   svg.bespoke-marp-slide {
     content-visibility: hidden;

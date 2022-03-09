@@ -30,6 +30,11 @@ const bespokeClasses = (deck) => {
       void document.body.clientHeight
       slideClasses.remove(activeReadyClass)
     }
+
+    setTimeout(() => {
+      // HACK needed to avoid Safari crash due to excessive layout.
+      document.body.classList.remove('loading')
+    })
   })
 }
 
