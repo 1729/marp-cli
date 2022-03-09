@@ -5,6 +5,7 @@ import bespokeFullscreen from './fullscreen'
 import bespokeInactive from './inactive'
 import bespokeInteractive from './interactive'
 import bespokeLoad from './load'
+import bespokeMobile from './mobile'
 import bespokeNavigation from './navigation'
 import bespokeOSC from './osc'
 import bespokePresenter from './presenter/'
@@ -36,21 +37,22 @@ const bespokeTemplate = (
     target,
     parse(
       //   P  N
-      [[1, 1, 0], bespokeSync({ key })],
-      [[1, 1, 1], bespokePresenter(target)],
-      [[1, 1, 0], bespokeInteractive],
+      //[[1, 1, 0], bespokeSync({ key })],
+      //[[1, 1, 1], bespokePresenter(target)],
+      //[[1, 1, 0], bespokeInteractive],
       [[1, 1, 1], bespokeClasses],
-      [[1, 0, 0], bespokeInactive()],
-      [[1, 1, 1], bespokeLoad],
-      [[1, 1, 1], bespokeState({ history: false })],
-      [[1, 1, 0], bespokeNavigation()],
-      [[1, 1, 0], bespokeFullscreen],
-      [[1, 0, 0], bespokeProgress],
-      [[1, 1, 0], bespokeTouch()],
-      [[1, 0, 0], bespokeOSC()],
-      [[1, 0, 0], bespokeTransition],
-      [[1, 1, 1], bespokeFragments],
-      [[1, 1, 0], bespokeWakeLock]
+      //[[1, 0, 0], bespokeInactive()],
+      //[[1, 1, 1], bespokeLoad],
+      //[[1, 1, 1], bespokeState({ history: false })],
+      //[[1, 1, 0], bespokeNavigation()],
+      //[[1, 1, 0], bespokeFullscreen],
+      //[[1, 0, 0], bespokeProgress],
+      //[[1, 1, 0], bespokeTouch()],
+      //[[1, 0, 0], bespokeOSC()],
+      //[[1, 0, 0], bespokeTransition],
+      //[[1, 1, 1], bespokeFragments],
+      //[[1, 1, 0], bespokeWakeLock],
+      [[1, 1, 0], bespokeMobile]
     )
   )
 

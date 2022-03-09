@@ -446,6 +446,93 @@ $progress-height: 5px;
       }
     }
   }
+
+  .bespoke-marp-mobile-root {
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    position: relative;
+    flex-direction: column;
+    background: white;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    .bespoke-marp-mobile-headers {
+      overflow-x: hidden;
+      overflow-y: hidden;
+      flex: 1;
+      display: flex;
+      width: 100%;
+      pointer-events: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 50%;
+      z-index: 2;
+
+      section {
+        width: 100vw;
+        height: 100%;
+        flex:0 0 100vw;
+
+        h1 {
+          font-size: 26px;
+          margin: 0;
+          padding: 18px;
+        }
+
+        img {
+          object-fit: contain;
+          width: 100%;
+          height: calc(100% - (26px + 36px));
+        }
+      }
+    }
+
+    .bespoke-marp-mobile-spacer {
+      flex: 1;
+      min-height: 50%;
+    }
+
+    .bespoke-marp-mobile-pages {
+      overflow-y: hidden;
+      scroll-snap-coordinate: 0 0;
+      scroll-snap-points-x: repeat(100%);
+      scroll-snap-type: x mandatory;
+      flex: 1;
+      display: flex;
+      width: 100%;
+      -webkit-overflow-scrolling: touch;
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      z-index: 1;
+
+      section {
+        width: 100%;
+        height: 100%;
+        flex:0 0 100vw;
+        align-items: center;
+        scroll-snap-align: start;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+
+        .bespoke-marp-mobile-content {
+          flex: 1;
+          padding: 20px 26px;
+          display: flex;
+          justify-content: center;
+        }
+
+        .bespoke-mark-mobile-dark {
+          background: black;
+          color: white;
+        }
+      }
+    }
+  }
 }
 
 @media print {
