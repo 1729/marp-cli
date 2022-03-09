@@ -1,4 +1,4 @@
-import { classPrefix } from './utils'
+import { setQuery, classPrefix } from './utils'
 
 interface HeaderEntry {
   title: string | null
@@ -8,8 +8,14 @@ interface HeaderEntry {
 
 interface PageEntry {
   el: HTMLElement
+  slide: number
   full: boolean
   dark: boolean
+}
+
+const coerceInt = (ns: string) => {
+  const coerced = Number.parseInt(ns, 10)
+  return Number.isNaN(coerced) ? null : coerced
 }
 
 function computeTextFontSize() {
@@ -60,10 +66,13 @@ function computeTextFontSize() {
 // Generates the mobile view, by walking the existing deck and spinning out a whole
 // different DOM.
 const bespokeMobile = (deck) => {
+  const deckTitle = document.title
+
   const pages: Array<PageEntry> = []
   const headers: Array<HeaderEntry> = []
 
-  for (const slide of deck.slides) {
+  for (let slideIndex = 0; slideIndex < deck.slides.length; slideIndex++) {
+    const slide = deck.slides[slideIndex]
     const figureEl = slide.querySelector("section[data-class='right'] figure")
     let contentEl
 
@@ -96,6 +105,7 @@ const bespokeMobile = (deck) => {
       for (const pageEl of contentEl.querySelectorAll('p')) {
         pages.push({
           el: pageEl.cloneNode(true) as HTMLElement,
+          slide: slideIndex,
           full: figure === null,
           dark: false,
         })
@@ -188,10 +198,17 @@ const bespokeMobile = (deck) => {
 
   document.body.appendChild(root)
 
+  const slideFromLocation = () => {
+    const parts = location.pathname.split('/')
+
+    const slideParts = parts[parts.length - 1].split('.')
+    return (coerceInt(slideParts[0]) || 1) - 1
+  }
+
   const performScroll = () => {
-    const pageWidth = pageView.clientWidth
     const scrollOffset = pageView.scrollLeft
-    const slideSpaceX = scrollOffset / pageWidth
+    const pageWidth = pageView.clientWidth
+    const pageSpaceX = scrollOffset / pageWidth
 
     let headerSpaceX = 0
 
@@ -201,12 +218,12 @@ const bespokeMobile = (deck) => {
       const nextHeaderPages = headers[i + 1].pages
       const nextHeaderFirstPage = nextHeaderPages[0]
 
-      if (slideSpaceX > headerLastPage && slideSpaceX < nextHeaderFirstPage) {
-        headerSpaceX = i - 1 + (slideSpaceX - (headerLastPage - 1))
+      if (pageSpaceX > headerLastPage && pageSpaceX < nextHeaderFirstPage) {
+        headerSpaceX = i - 1 + (pageSpaceX - (headerLastPage - 1))
         break
       }
 
-      if (slideSpaceX > headerLastPage) {
+      if (pageSpaceX > headerLastPage) {
         headerSpaceX = i + 1
       }
     }
@@ -217,15 +234,66 @@ const bespokeMobile = (deck) => {
       headerView.scrollLeft = scroll
     }
 
+    // On page scrolls, update the history + title
+    if (Number.isInteger(pageSpaceX)) {
+      const page = pages[pageSpaceX]
+      const slide = page.slide
+
+      if (slideFromLocation() !== slide) {
+        const parts = location.pathname.split('/')
+        parts.pop()
+
+        document.title = `${
+          headers[Math.floor(headerSpaceX)].title
+        } | ${deckTitle}`
+
+        const newLocation = {
+          ...location,
+          pathname: parts.join('/') + `/${slide + 1}`,
+        }
+
+        setQuery(
+          {},
+          {
+            location: newLocation,
+            setter: (...args) => history.pushState(...args),
+          }
+        )
+      }
+    }
+
     requestAnimationFrame(performScroll)
   }
 
   requestAnimationFrame(performScroll)
 
+  const navigateFromState = () => {
+    const slide = slideFromLocation()
+
+    for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+      const page = pages[pageIndex]
+
+      if (page.slide === slide) {
+        const pageWidth = pageView.clientWidth
+        pageView.scrollLeft = pageIndex * pageWidth
+        break
+      }
+    }
+  }
+
   setTimeout(() => {
     // HACK needed to avoid Safari crash due to excessive layout.
-    document.body.classList.remove('loading')
     computeTextFontSize()
+
+    // Restore position from URL on load
+    navigateFromState()
+
+    // Update position on URL change
+    window.addEventListener('popstate', () => {
+      navigateFromState()
+    })
+
+    document.body.classList.remove('loading')
   })
 }
 export default bespokeMobile

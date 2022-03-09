@@ -56,7 +56,8 @@ const bespokeState = (opts: BespokeStateOption = {}) => {
     }
 
     const parseState = (opts: any = { fragment: true }) => {
-      const parts = location.toString().split('/')
+      const parts = location.pathname.split('/')
+
       const pageParts = parts[parts.length - 1].split('.')
       const page = (coerceInt(pageParts[0]) || 1) - 1
       const fragment = opts.fragment ? coerceInt(readQuery('f') || '') : null
