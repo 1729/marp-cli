@@ -10,7 +10,6 @@ interface PageEntry {
   el: HTMLElement
   slide: number
   full: boolean
-  dark: boolean
 }
 
 const coerceInt = (ns: string) => {
@@ -97,35 +96,46 @@ const bespokeMobile = (deck) => {
       contentEl = slide.querySelector(
         "section[data-class='right'] p"
       )?.parentElement
-    }
 
-    if (contentEl) {
-      title = contentEl.querySelector('h1')?.textContent
+      if (contentEl) {
+        title = contentEl.querySelector('h1')?.textContent
 
-      for (const pageEl of contentEl.querySelectorAll('p')) {
-        pages.push({
-          el: pageEl.cloneNode(true) as HTMLElement,
-          slide: slideIndex,
-          full: figure === null,
-          dark: false,
-        })
+        for (const pageEl of contentEl.querySelectorAll('p')) {
+          pages.push({
+            el: pageEl.cloneNode(true) as HTMLElement,
+            slide: slideIndex,
+            full: false,
+          })
 
-        if (figure != null) {
-          // Page with figure
-          if (
-            headers.length === 0 ||
-            headers[headers.length - 1].figure !== figure
-          ) {
-            headers.push({
-              title,
-              figure,
-              pages: [pages.length - 1],
-            })
-          } else {
-            headers[headers.length - 1].pages.push(pages.length - 1)
+          if (figure != null) {
+            // Page with figure
+            if (
+              headers.length === 0 ||
+              headers[headers.length - 1].figure !== figure
+            ) {
+              headers.push({
+                title,
+                figure,
+                pages: [pages.length - 1],
+              })
+            } else {
+              headers[headers.length - 1].pages.push(pages.length - 1)
+            }
           }
         }
       }
+    } else {
+      pages.push({
+        el: slide.children[0].cloneNode(true) as HTMLElement,
+        slide: slideIndex,
+        full: true,
+      })
+
+      headers.push({
+        title: null,
+        figure: null,
+        pages: [pages.length - 1],
+      })
     }
   }
 
@@ -177,22 +187,28 @@ const bespokeMobile = (deck) => {
     headerView.appendChild(headerEl)
   }
 
-  for (const { el: pageEl, dark, full } of pages) {
+  for (const { el: pageEl, full } of pages) {
     const sectionEl = document.createElement('section')
 
-    if (!full) {
+    if (full) {
+      sectionEl.setAttribute('class', pageEl.getAttribute('class') || '')
+
+      for (let i = 0; i < pageEl.children.length; i++) {
+        const child = pageEl.children[i]
+        if (child.cloneNode) {
+          sectionEl.appendChild(child.cloneNode(true))
+        }
+      }
+    } else {
       addSpacer(sectionEl)
+
+      const contentEl = document.createElement('div')
+      contentEl.classList.add(`${classPrefix}mobile-content`)
+      sectionEl.appendChild(contentEl)
+
+      contentEl.appendChild(pageEl)
     }
 
-    const contentEl = document.createElement('div')
-    contentEl.classList.add(`${classPrefix}mobile-content`)
-    sectionEl.appendChild(contentEl)
-
-    if (dark) {
-      sectionEl.classList.add(`${classPrefix}mobile-dark`)
-    }
-
-    contentEl.appendChild(pageEl)
     pageView.appendChild(sectionEl)
   }
 
@@ -268,22 +284,21 @@ const bespokeMobile = (deck) => {
   requestAnimationFrame(performScroll)
 
   const navigateFromState = () => {
-    const slide = slideFromLocation()
+    const slide = 5
 
     for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
       const page = pages[pageIndex]
 
       if (page.slide === slide) {
         const pageWidth = pageView.clientWidth
-        pageView.scrollLeft = pageIndex * pageWidth
+        pageView.scrollLeft = (pageIndex + 1) * pageWidth
         break
       }
     }
   }
 
   setTimeout(() => {
-    // HACK needed to avoid Safari crash due to excessive layout.
-    computeTextFontSize()
+    document.body.classList.remove('loading')
 
     // Restore position from URL on load
     navigateFromState()
@@ -293,7 +308,8 @@ const bespokeMobile = (deck) => {
       navigateFromState()
     })
 
-    document.body.classList.remove('loading')
+    // HACK needed to avoid Safari crash due to excessive layout.
+    computeTextFontSize()
   })
 }
 export default bespokeMobile

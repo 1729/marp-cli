@@ -15,7 +15,6 @@ const bespokeTransition = (deck) => {
   let currentFragment: any
 
   deck[transitionPreparing] = false
-  window.deck = deck
 
   const transitionCallback =
     (fn: (e: any) => void, { back, cond }: TransitionCallbackOption) =>
