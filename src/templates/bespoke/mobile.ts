@@ -284,7 +284,7 @@ const bespokeMobile = (deck) => {
   requestAnimationFrame(performScroll)
 
   const navigateFromState = () => {
-    const slide = 5
+    const slide = slideFromLocation()
 
     for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
       const page = pages[pageIndex]
