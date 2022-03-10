@@ -9,6 +9,19 @@ const coerceInt = (ns: string) => {
   return Number.isNaN(coerced) ? null : coerced
 }
 
+function coerceHexInt(ns: string) {
+  const coerced = Number.parseInt(ns, 16)
+  return Number.isNaN(coerced) ? null : coerced
+}
+
+const toPaddedHex = (num: number) => {
+  if (num < 16) {
+    return `0${num.toString(16)}`.toUpperCase()
+  } else {
+    return num.toString(16)
+  }
+}
+
 const bespokeState = (opts: BespokeStateOption = {}) => {
   const options: BespokeStateOption = { history: true, ...opts }
   const deckTitle = document.title
@@ -59,8 +72,8 @@ const bespokeState = (opts: BespokeStateOption = {}) => {
       const parts = location.pathname.split('/')
 
       const pageParts = parts[parts.length - 1].split('.')
-      const page = (coerceInt(pageParts[0]) || 1) - 1
-      const fragment = opts.fragment ? coerceInt(readQuery('f') || '') : null
+      const page = coerceHexInt(pageParts[0].substring(0, 2)) || 0
+      const fragment = opts.fragment ? coerceInt(readQuery('f') || '1') : null
 
       activateSlide(page, fragment)
     }
@@ -75,7 +88,7 @@ const bespokeState = (opts: BespokeStateOption = {}) => {
 
       const newLocation = {
         ...location,
-        pathname: parts.join('/') + `/${index + 1}`,
+        pathname: parts.join('/') + `/${toPaddedHex(index)}00.html`,
       }
 
       setQuery(

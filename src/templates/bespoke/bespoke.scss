@@ -518,18 +518,22 @@ $progress-height: 5px;
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        text-indent: auto;
 
-        .bespoke-marp-mobile-content {
+        .bespoke-marp-mobile-page-content {
+          padding: 16px 0;
           flex: 1;
-          padding: 20px 26px;
           display: flex;
           justify-content: center;
         }
 
-        .bespoke-mark-mobile-dark {
-          background: black;
-          color: white;
+        p { // stylelint-disable-line
+          text-indent: revert; // Disable the overhang on p's
         }
+      }
+
+      section.bespoke-marp-mobile-page {
+        padding: 16px 24px;
       }
     }
   }
