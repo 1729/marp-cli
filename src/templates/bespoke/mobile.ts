@@ -131,6 +131,12 @@ function buildMobileHeadersAndPages(deck): [HeaderEntry[], PageEntry[]] {
     const slide = deck.slides[slideIndex]
     if (slide.querySelector("section[data-skip-mobile='true']")) continue
 
+    const listSplitPoint = parseInt(
+      slide
+        .querySelector(`section[data-list-split]`)
+        ?.getAttribute('data-list-split') || '5'
+    )
+
     const figureEl = slide.querySelector("section[data-class='right'] figure")
     let contentEl
 
@@ -161,7 +167,36 @@ function buildMobileHeadersAndPages(deck): [HeaderEntry[], PageEntry[]] {
 
         let page = 0
 
-        for (const pageEl of contentEl.querySelectorAll('p')) {
+        for (let i = 0; i < contentEl.children.length; i++) {
+          let pageEl = contentEl.children[i]
+
+          if (pageEl.tagName !== 'P' && pageEl.tagName !== 'UL') continue
+
+          if (
+            contentEl.children[i + 1] &&
+            contentEl.children[i + 1].tagName === 'UL'
+          ) {
+            pageEl = document.createElement('div')
+            const sublist = document.createElement('ul')
+
+            pageEl.appendChild(contentEl.children[i].cloneNode(true))
+            pageEl.appendChild(sublist)
+
+            const ul = contentEl.children[i + 1]
+
+            const lis = ul.children
+
+            for (
+              let j = 0, l = lis.length;
+              j < Math.min(listSplitPoint, l);
+              j++
+            ) {
+              sublist.appendChild(lis[0].cloneNode(true))
+              lis[0].remove()
+              if (lis.length === 0) i++
+            }
+          }
+
           pages.push({
             el: pageEl.cloneNode(true) as HTMLElement,
             slide: slideIndex,

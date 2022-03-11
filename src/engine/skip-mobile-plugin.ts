@@ -5,7 +5,7 @@ interface SkipMobile {
   skipMobile: boolean
 }
 
-export default function transitionPlugin(md: MarkdownIt & { marpit: Marpit }) {
+export default function skipMobilePlugin(md: MarkdownIt & { marpit: Marpit }) {
   md.marpit.customDirectives.local.skip_mobile = (value): SkipMobile => {
     if (value === 'true') {
       return { skipMobile: true }

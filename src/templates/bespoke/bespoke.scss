@@ -530,6 +530,10 @@ $progress-height: 5px;
         p { // stylelint-disable-line
           text-indent: revert; // Disable the overhang on p's
         }
+
+        li {
+          text-indent: revert; // Disable the overhang on li's
+        }
       }
 
       section.bespoke-marp-mobile-page {

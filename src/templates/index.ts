@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { Element, Marpit, Options, RenderResult } from '@marp-team/marpit'
+import listSplitPlugin from '../engine/list-split-plugin'
 import skipMobilePlugin from '../engine/skip-mobile-plugin'
 import transitionPlugin from '../engine/transition-plugin'
 import barePug from './bare/bare.pug'
@@ -92,8 +93,9 @@ export const bespoke: Template<TemplateBespokeOption> = async (opts) => {
   // Hide template-specific modifier from options which have exposed to the functional engine
   Object.defineProperty(rendererOptions, 'modifier', {
     value: (marpit) => {
-      if (opts.transition) marpit.use(transitionPlugin)
+      marpit.use(listSplitPlugin)
       marpit.use(skipMobilePlugin)
+      if (opts.transition) marpit.use(transitionPlugin)
     },
   })
 
