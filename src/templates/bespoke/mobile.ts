@@ -356,8 +356,7 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
         const newLocation = {
           ...location,
           pathname:
-            parts.join('/') +
-            `/${toPaddedHex(slide)}${toPaddedHex(page.page)}.html`,
+            parts.join('/') + `/${toPaddedHex(slide)}${toPaddedHex(page.page)}`,
         }
 
         setQuery(
