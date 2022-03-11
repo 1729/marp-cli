@@ -88,7 +88,7 @@ const bespokeState = (opts: BespokeStateOption = {}) => {
 
       const newLocation = {
         ...location,
-        pathname: parts.join('/') + `/${toPaddedHex(index)}00.html`,
+        pathname: parts.join('/') + `/${toPaddedHex(index)}00`,
       }
 
       setQuery(

@@ -248,6 +248,7 @@ function buildMobileDOM(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
     if (header.figure) {
       const figureEl = document.createElement('img')
       figureEl.setAttribute('src', header.figure)
+      figureEl.setAttribute('loading', 'lazy')
       headerEl.appendChild(figureEl)
     }
 
@@ -344,7 +345,7 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
 
       const [locationSlide, locationPage] = slideAndPageFromLocation()
 
-      if (locationSlide !== slide || locationPage !== pageSpaceX) {
+      if (locationSlide !== slide || locationPage !== page.page) {
         const parts = location.pathname.split('/')
         parts.pop()
 
@@ -355,7 +356,8 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
         const newLocation = {
           ...location,
           pathname:
-            parts.join('/') + `/${toPaddedHex(slide)}${toPaddedHex(page.page)}`,
+            parts.join('/') +
+            `/${toPaddedHex(slide)}${toPaddedHex(page.page)}.html`,
         }
 
         setQuery(
@@ -392,10 +394,10 @@ const bespokeMobile = (deck) => {
 
     for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
       const page = pages[pageIndex]
-
       if (page.slide === locationSlide && page.page === locationPage) {
         const pageWidth = pageView.clientWidth
-        pageView.scrollLeft = (pageIndex + 1) * pageWidth
+        // Not sure why this is needed, otherwise chrome is off by a page on initial load (maybe due to spacer?)
+        setTimeout(() => (pageView.scrollLeft = pageIndex * pageWidth))
         break
       }
     }
@@ -413,9 +415,7 @@ const bespokeMobile = (deck) => {
       navigateFromState()
 
       // Update position on URL change
-      window.addEventListener('popstate', () => {
-        navigateFromState()
-      })
+      window.addEventListener('popstate', () => navigateFromState())
 
       computeTextFontSize()
     })
