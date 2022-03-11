@@ -18,7 +18,7 @@ const toPaddedHex = (num: number) => {
   if (num < 16) {
     return `0${num.toString(16)}`.toUpperCase()
   } else {
-    return num.toString(16)
+    return num.toString(16).toUpperCase()
   }
 }
 
