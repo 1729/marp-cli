@@ -129,6 +129,8 @@ function buildMobileHeadersAndPages(deck): [HeaderEntry[], PageEntry[]] {
 
   for (let slideIndex = 0; slideIndex < deck.slides.length; slideIndex++) {
     const slide = deck.slides[slideIndex]
+    if (slide.querySelector("section[data-skip-mobile='true']")) continue
+
     const figureEl = slide.querySelector("section[data-class='right'] figure")
     let contentEl
 
