@@ -22,7 +22,7 @@ $progress-height: 5px;
   }
 
   body.loading {
-    display: none;
+    visibility: hidden;
   }
 
   // Common visibility control for slides

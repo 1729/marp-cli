@@ -444,9 +444,6 @@ const bespokeMobile = (deck) => {
     waitForDOMContentLoaded().then(() => {
       buildMobileStylesheet()
 
-      // HACK needed to avoid Safari crash due to excessive layout.
-      document.body.classList.remove('loading')
-
       // Restore position from URL on load
       navigateFromState()
 
@@ -454,6 +451,9 @@ const bespokeMobile = (deck) => {
       window.addEventListener('popstate', () => navigateFromState())
 
       computeTextFontSize()
+
+      // HACK needed to avoid Safari crash due to excessive layout.
+      document.body.classList.remove('loading')
     })
   })
 }
