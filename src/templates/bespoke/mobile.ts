@@ -342,9 +342,24 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
   const deckTitle = document.title
   const headerView = document.querySelector(`.${classPrefix}mobile-headers`)
   const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
+  const handleEl = document.querySelector(
+    `.${classPrefix}mobile-scroller .handle`
+  ) as HTMLElement
+  const sliderEl = document.querySelector(
+    `.${classPrefix}mobile-scroller .slider`
+  ) as HTMLElement
+  const pageTipEl = document.querySelector(
+    `.${classPrefix}mobile-scroller .tip`
+  ) as HTMLElement
+  const pageLabelEl = document.querySelector(
+    `.${classPrefix}mobile-scroller .label`
+  ) as HTMLElement
 
   if (pageView === null) return
   if (headerView === null) return
+  if (handleEl === null) return
+  if (sliderEl === null) return
+  if (pageLabelEl === null) return
 
   const performScroll = () => {
     const scrollOffset = pageView.scrollLeft
@@ -375,7 +390,7 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
       headerView.scrollLeft = scroll
     }
 
-    // On page scrolls, update the history + title
+    // On page scrolls, update the history + title + handle
     if (Number.isInteger(pageSpaceX)) {
       const page = pages[pageSpaceX]
       const slide = page.slide
@@ -403,6 +418,28 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
             setter: (...args) => history.pushState(...args),
           }
         )
+      }
+
+      const hitboxMargin = 10
+      const handleOffset =
+        (pageSpaceX / pages.length) * sliderEl.clientWidth +
+        sliderEl.offsetLeft -
+        hitboxMargin
+
+      const handleLeft = `${Math.floor(handleOffset)}px`
+      const tipLeft = `${Math.floor(handleOffset - 32)}px`
+      const pageLabel = `${toPaddedHex(slide)}${toPaddedHex(page.page)}`
+
+      if (handleEl.style.left !== handleLeft) {
+        handleEl.style.left = handleLeft
+      }
+
+      if (pageTipEl.style.left !== tipLeft) {
+        pageTipEl.style.left = tipLeft
+      }
+
+      if (pageLabelEl.innerHTML !== pageLabel) {
+        pageLabelEl.innerHTML = pageLabel
       }
     }
 
@@ -439,6 +476,73 @@ const bespokeMobile = (deck) => {
     }
   }
 
+  const setupScroller = () => {
+    const scroller = document.querySelector(`.${classPrefix}mobile-scroller`)
+    if (scroller === null) return
+    scroller.setAttribute('style', 'display: flex;')
+
+    const handleEl = document.querySelector(
+      `.${classPrefix}mobile-scroller .handle`
+    ) as HTMLElement
+
+    const sliderEl = document.querySelector(
+      `.${classPrefix}mobile-scroller .slider`
+    ) as HTMLElement
+
+    const tipEl = document.querySelector(
+      `.${classPrefix}mobile-scroller .tip`
+    ) as HTMLElement
+
+    let startScrollBookOffset = 0
+    let startScrollPixelOffset = 0
+    let scrolling = false
+
+    handleEl.addEventListener('touchstart', (e) => {
+      scrolling = true
+      const te = e as TouchEvent
+
+      const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
+      if (pageView === null) return
+      const pageWidth = pageView.clientWidth
+
+      tipEl.style.display = 'flex'
+
+      startScrollBookOffset = pageView.scrollLeft / pageWidth / pages.length
+      startScrollPixelOffset = te.touches[0].clientX
+    })
+
+    handleEl.addEventListener('touchend', () => {
+      scrolling = false
+      tipEl.style.display = 'none'
+    })
+
+    handleEl.addEventListener('touchmove', (e) => {
+      if (!scrolling) return
+
+      const touchEvent = e as TouchEvent
+      if (touchEvent === null) return
+      if (touchEvent.targetTouches.length !== 1) return
+
+      const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
+      if (pageView === null) return
+      const pageWidth = pageView.clientWidth
+      const tx = e.targetTouches[0].clientX
+
+      let bookOffsetPct = Math.max(
+        0,
+        Math.min(1, (tx - sliderEl.offsetLeft) / sliderEl.offsetWidth)
+      )
+
+      // Snap to current page within a few pixels
+      if (Math.abs(tx - startScrollPixelOffset) < 12) {
+        bookOffsetPct = startScrollBookOffset
+      }
+
+      const pageIndex = Math.floor(bookOffsetPct * pages.length)
+      setTimeout(() => (pageView.scrollLeft = pageIndex * pageWidth))
+    })
+  }
+
   // Wait a frame so layout runs
   setTimeout(() => {
     waitForDOMContentLoaded().then(() => {
@@ -451,6 +555,8 @@ const bespokeMobile = (deck) => {
       window.addEventListener('popstate', () => navigateFromState())
 
       computeTextFontSize()
+
+      setupScroller()
 
       // HACK needed to avoid Safari crash due to excessive layout.
       document.body.classList.remove('loading')
