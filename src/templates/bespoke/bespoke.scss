@@ -555,6 +555,7 @@ $progress-height: 5px;
   }
 
   .bespoke-marp-mobile-scroller {
+    user-select: none;
     display: none;
     position: absolute;
     width: 100%;

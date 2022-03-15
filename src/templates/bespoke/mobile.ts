@@ -494,7 +494,8 @@ const bespokeMobile = (deck) => {
     ) as HTMLElement
 
     let startScrollBookOffset = 0
-    let startScrollPixelOffset = 0
+    let startScrollSnapLowerX = 0
+    let startScrollSnapUpperX = 0
     let scrolling = false
 
     handleEl.addEventListener('touchstart', (e) => {
@@ -508,7 +509,16 @@ const bespokeMobile = (deck) => {
       tipEl.style.display = 'flex'
 
       startScrollBookOffset = pageView.scrollLeft / pageWidth / pages.length
-      startScrollPixelOffset = te.touches[0].clientX
+      const snapSize = 4
+
+      startScrollSnapLowerX = Math.min(
+        e.targetTouches[0].clientX - snapSize,
+        handleEl.offsetLeft - snapSize
+      )
+      startScrollSnapUpperX = Math.max(
+        e.targetTouches[0].clientX + snapSize,
+        handleEl.offsetLeft + handleEl.offsetWidth + snapSize
+      )
     })
 
     handleEl.addEventListener('touchend', () => {
@@ -534,7 +544,7 @@ const bespokeMobile = (deck) => {
       )
 
       // Snap to current page within a few pixels
-      if (Math.abs(tx - startScrollPixelOffset) < 12) {
+      if (tx >= startScrollSnapLowerX && tx <= startScrollSnapUpperX) {
         bookOffsetPct = startScrollBookOffset
       }
 
