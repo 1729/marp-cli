@@ -354,6 +354,15 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
   const pageLabelEl = document.querySelector(
     `.${classPrefix}mobile-scroller .label`
   ) as HTMLElement
+  const chapterEls = document.querySelectorAll(
+    `.${classPrefix}mobile-nav .chapters button`
+  )
+  const chapterSlides: Array<number> = []
+  for (let i = 0; i < chapterEls.length; i++) {
+    chapterSlides.push(
+      parseInt(chapterEls[i].getAttribute('data-slide') || '0')
+    )
+  }
 
   if (pageView === null) return
   if (headerView === null) return
@@ -390,7 +399,7 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
       headerView.scrollLeft = scroll
     }
 
-    // On page scrolls, update the history + title + handle
+    // On page scrolls, update the history + title + handle + scroller + nav
     if (Number.isInteger(pageSpaceX)) {
       const page = pages[pageSpaceX]
       const slide = page.slide
@@ -420,6 +429,7 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
         )
       }
 
+      // Scroller
       const hitboxMargin = 10
       const handleOffset =
         (pageSpaceX / pages.length) * sliderEl.clientWidth +
@@ -441,6 +451,20 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
       if (pageLabelEl.innerHTML !== pageLabel) {
         pageLabelEl.innerHTML = pageLabel
       }
+
+      // Nav
+      for (let i = 0; i < chapterEls.length; i++) {
+        const chapterEl = chapterEls[i]
+        const chapterSlide = chapterSlides[i]
+        const nextChapterSlide =
+          i < chapterSlides.length - 1 ? chapterSlides[i + 1] : Infinity
+
+        const isActive = slide >= chapterSlide && slide < nextChapterSlide
+
+        if (chapterEl.classList.contains('active') !== isActive) {
+          chapterEl.classList.toggle('active')
+        }
+      }
     }
 
     requestAnimationFrame(performScroll)
@@ -453,28 +477,6 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
 // different DOM.
 const bespokeMobile = (deck) => {
   const [headers, pages] = buildMobileHeadersAndPages(deck)
-
-  // Disable desktop slides
-  deck.parent.setAttribute('style', 'display: none;')
-  buildMobileDOM(headers, pages)
-  runRAF(headers, pages)
-
-  const navigateFromState = () => {
-    const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
-    if (pageView === null) return
-
-    const [locationSlide, locationPage] = slideAndPageFromLocation()
-
-    for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-      const page = pages[pageIndex]
-      if (page.slide === locationSlide && page.page === locationPage) {
-        const pageWidth = pageView.clientWidth
-        // Not sure why this is needed, otherwise chrome is off by a page on initial load (maybe due to spacer?)
-        setTimeout(() => (pageView.scrollLeft = pageIndex * pageWidth))
-        break
-      }
-    }
-  }
 
   const setupScroller = () => {
     const scroller = document.querySelector(`.${classPrefix}mobile-scroller`)
@@ -500,7 +502,6 @@ const bespokeMobile = (deck) => {
 
     handleEl.addEventListener('touchstart', (e) => {
       scrolling = true
-      const te = e as TouchEvent
 
       const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
       if (pageView === null) return
@@ -553,6 +554,86 @@ const bespokeMobile = (deck) => {
     })
   }
 
+  const setupNav = () => {
+    const navEl = document.querySelector(
+      `.${classPrefix}mobile-nav`
+    ) as HTMLElement
+
+    const chaptersEl = document.querySelector(
+      `.${classPrefix}mobile-nav .chapters`
+    ) as HTMLElement
+
+    let toggled = false
+    const toggleEl = document.querySelector(
+      `.${classPrefix}mobile-nav .toggle`
+    ) as HTMLElement
+
+    const toggleNav = () => {
+      toggled = !toggled
+      navEl.classList.toggle('toggled')
+      chaptersEl.style.display = toggled ? 'flex' : 'none'
+      toggleEl.innerHTML = !toggled ? '☰' : '✕'
+    }
+
+    toggleEl.addEventListener('click', toggleNav)
+
+    const add = (title, slide) => {
+      const el = document.createElement('button')
+      el.innerHTML = title
+      el.setAttribute('data-slide', slide.toString())
+      chaptersEl.appendChild(el)
+    }
+
+    add('1. Network State', 0)
+    add('2. Ledger of Record', 5)
+    add('3. Optimalism', 10)
+    add('4. Regulation is Information', 15)
+    add('5. Crowdchoice', 20)
+    add('6. Cryptouniversity', 25)
+    add('7. City in the Cloud', 30)
+    add('8. Decentralized Defense', 35)
+    add('9. Tech Tree', 40)
+    add('10. 1729', 45)
+
+    chaptersEl.querySelectorAll('button').forEach((el) => {
+      el.addEventListener('click', () => {
+        const slide = parseInt(el.getAttribute('data-slide') as string)
+        const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
+        if (pageView === null) return
+        const pageWidth = pageView.clientWidth
+        const page = pages.find((p) => p.slide === slide)
+        if (page === undefined) return
+        const pageIndex = pages.indexOf(page)
+        pageView.scrollLeft = pageIndex * pageWidth
+        toggleNav()
+      })
+    })
+  }
+
+  // Disable desktop slides
+  deck.parent.setAttribute('style', 'display: none;')
+  buildMobileDOM(headers, pages)
+  setupScroller()
+  setupNav()
+  runRAF(headers, pages)
+
+  const navigateFromState = () => {
+    const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
+    if (pageView === null) return
+
+    const [locationSlide, locationPage] = slideAndPageFromLocation()
+
+    for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+      const page = pages[pageIndex]
+      if (page.slide === locationSlide && page.page === locationPage) {
+        const pageWidth = pageView.clientWidth
+        // Not sure why this is needed, otherwise chrome is off by a page on initial load (maybe due to spacer?)
+        setTimeout(() => (pageView.scrollLeft = pageIndex * pageWidth))
+        break
+      }
+    }
+  }
+
   // Wait a frame so layout runs
   setTimeout(() => {
     waitForDOMContentLoaded().then(() => {
@@ -565,8 +646,6 @@ const bespokeMobile = (deck) => {
       window.addEventListener('popstate', () => navigateFromState())
 
       computeTextFontSize()
-
-      setupScroller()
 
       // HACK needed to avoid Safari crash due to excessive layout.
       document.body.classList.remove('loading')
