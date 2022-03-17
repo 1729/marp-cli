@@ -4,6 +4,7 @@ import bespokeFragments from './fragments'
 import bespokeFullscreen from './fullscreen'
 import bespokeInactive from './inactive'
 import bespokeInteractive from './interactive'
+import bespokeKindle from './kindle'
 import bespokeLoad from './load'
 import bespokeMobile from './mobile'
 import bespokeNavigation from './navigation'
@@ -33,7 +34,9 @@ const bespokeTemplate = (
   setViewMode()
 
   // Hacky, dispatch based on mobile browser
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+  const isMobile =
+    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+    document.location.search === '?mobile'
 
   if (isMobile) {
     return bespoke.from(
@@ -60,7 +63,8 @@ const bespokeTemplate = (
         [[1, 0, 0], bespokeOSC()],
         [[1, 0, 0], bespokeTransition],
         [[1, 1, 1], bespokeFragments],
-        [[1, 1, 0], bespokeWakeLock]
+        [[1, 1, 0], bespokeWakeLock],
+        [[1, 1, 0], bespokeKindle]
       )
     )
   }
