@@ -5,19 +5,36 @@ import {
   buildCompactHeadersAndPages,
 } from './utils/compact'
 
-const writeText = (doc, text, size) => {
-  const format = new RTF.Format()
-  const paraFormat = new RTF.Format()
+const formatCache = new Map()
 
-  format.fontSize = paraFormat.fontSize = size
-  paraFormat.makeParagraph = true
+const appendToDoc = (
+  doc,
+  text,
+  size,
+  bold = false,
+  bulleted = false,
+  para = false,
+  url: string | null = null
+) => {
+  const key = `${size}-${bold}-${bulleted}-${para}`
+  let format
 
-  const terms = text.split(' ')
-  for (let i = 0; i < terms.length; i++) {
-    doc.writeText(
-      i === 0 ? `${terms[i]}` : `  ${terms[i]}`,
-      i === terms.length - 1 ? paraFormat : format
-    )
+  if (!formatCache.has(key)) {
+    format = new RTF.Format()
+    format.fontSize = size
+    format.bold = bold
+    format.bulleted = bulleted
+    format.makeParagraph = para
+    formatCache.set(key, format)
+  } else {
+    format = formatCache.get(key)
+  }
+
+  if (url != null) {
+    // TODO this might mean we don't close paragraphs ending in links
+    doc.writeLink(text, url, format)
+  } else {
+    doc.writeText(text, format)
   }
 }
 
@@ -188,12 +205,36 @@ const addKindleSlideScript = (image, script) => {
   )
 }
 
-const writeDeckPage = (doc, script, title, bodies, image) => {
-  writeText(doc, title, 4) // Title is small due to kindle script
+const writeDeckPage = (doc, script, title, bodyEl: HTMLElement, image) => {
+  appendToDoc(doc, ' ' + title, 4, false, false, true) // Title is small due to kindle script wanting to avoid wrapping
 
-  for (let i = 0; i < bodies.length; i++) {
-    writeText(doc, bodies[i], 10)
+  const walk = (parent, bold) => {
+    for (let i = 0; i < parent.childNodes.length; i++) {
+      const node = parent.childNodes[i]
+
+      if (node.nodeType === Node.TEXT_NODE) {
+        appendToDoc(doc, ' ' + node.textContent, 10, bold)
+      } else if ((node as HTMLElement).tagName === 'A') {
+        appendToDoc(
+          doc,
+          ' ' + node.textContent,
+          10,
+          bold,
+          false,
+          false,
+          (node as HTMLElement).getAttribute('href') || null
+        )
+      } else if ((node as HTMLElement).tagName === 'EM') {
+        walk(node, true)
+      }
+    }
   }
+
+  doc.addCommand('\\pard')
+
+  walk(bodyEl, false)
+
+  doc.addCommand('\\par')
 
   doc.addPage()
 
@@ -203,57 +244,35 @@ const writeDeckPage = (doc, script, title, bodies, image) => {
 // Generates the mobile view, by walking the existing deck and spinning out a whole
 // different DOM.
 const bespokeKindle = (deck) => {
-  /*const [headers, pages] = */ buildCompactHeadersAndPages(deck)
+  const [headers, pages] = buildCompactHeadersAndPages(deck)
   window['downloadKindlePackage'] = () => {
     const doc = new RTF.Doc()
     const script: Array<string> = []
     const ext = new Date().getTime()
     addKindlePreamble(script, `~/Downloads/kindle-${ext}.rtf`)
 
-    writeDeckPage(
-      doc,
-      script,
-      'Real Estate Investment Trusts (REITs) Multi Line Header',
-      ['Body 1 Very long body here. This is some longer test.'],
-      '/Users/gfodor/Downloads/0AA-example/assets/autodesk-revit.jpg'
-    )
-    writeDeckPage(
-      doc,
-      script,
-      'Real Estate Investment Trusts (REITs) Multi Line Header',
-      ['Short body, just doing another line'],
-      '/Users/gfodor/Downloads/0AA-example/assets/autodesk-revit.jpg'
-    )
-    writeDeckPage(
-      doc,
-      script,
-      'Real Estate Investment Trusts (REITs) Multi Line Header',
-      [
-        'And a third line. And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.And a third line.',
-      ],
-      '/Users/gfodor/Downloads/0AA-example/assets/autodesk-revit.jpg'
-    )
-    writeDeckPage(
-      doc,
-      script,
-      'Title Slide 2',
-      ['Body 2 Here', 'Body 2 Second paragraph'],
-      '/Users/gfodor/Downloads/0AA-example/assets/chinese-control.jpg'
-    )
-    writeDeckPage(
-      doc,
-      script,
-      'Title Slide 2',
-      ['Just more text here.', 'Seriously'],
-      '/Users/gfodor/Downloads/0AA-example/assets/chinese-control.jpg'
-    )
-    writeDeckPage(
-      doc,
-      script,
-      'Title Slide 3',
-      ['Short.'],
-      '/Users/gfodor/Downloads/0AA-example/assets/geodesic-distance.jpg'
-    )
+    const sourcePath =
+      new URL(document.location.href).searchParams.get('source_path') ||
+      '~/ostn/draftcontent/book'
+    const chapterPath =
+      new URL(document.location.href).searchParams.get('chapter_path') ||
+      'A01-the-network-state'
+
+    for (const header of headers) {
+      for (const pageIndex of header.pages) {
+        const page = pages[pageIndex]
+        if (page.full) continue
+        if (page.el.tagName === 'P') {
+          writeDeckPage(
+            doc,
+            script,
+            header.title,
+            page.el,
+            `${sourcePath}/${chapterPath}/${header.figure}`
+          )
+        }
+      }
+    }
 
     script.push('end tell')
 
