@@ -12,18 +12,17 @@ const appendToDoc = (
   text,
   size,
   bold = false,
-  bulleted = false,
   para = false,
   url: string | null = null
 ) => {
-  const key = `${size}-${bold}-${bulleted}-${para}`
+  if (text.trim() === '') return
+  const key = `${size}-${bold}-${para}`
   let format
 
   if (!formatCache.has(key)) {
     format = new RTF.Format()
     format.fontSize = size
     format.bold = bold
-    format.bulleted = bulleted
     format.makeParagraph = para
     formatCache.set(key, format)
   } else {
@@ -206,27 +205,48 @@ const addKindleSlideScript = (image, script) => {
 }
 
 const writeDeckPage = (doc, script, title, bodyEl: HTMLElement, image) => {
-  appendToDoc(doc, ' ' + title, 4, false, false, true) // Title is small due to kindle script wanting to avoid wrapping
+  appendToDoc(doc, title, 4, false, true) // Title is small due to kindle script wanting to avoid wrapping
 
   const walk = (parent, bold) => {
+    if ((parent as HTMLElement).tagName === 'UL') {
+      doc.startList()
+    }
+
+    let leadWithSpace = false
+
     for (let i = 0; i < parent.childNodes.length; i++) {
       const node = parent.childNodes[i]
+      const isLast = i === parent.childNodes.length - 1
 
-      if (node.nodeType === Node.TEXT_NODE) {
-        appendToDoc(doc, ' ' + node.textContent, 10, bold)
+      if ((node as HTMLElement).tagName === 'LI') {
+        appendToDoc(doc, node.textContent, 10, bold)
       } else if ((node as HTMLElement).tagName === 'A') {
         appendToDoc(
           doc,
-          ' ' + node.textContent,
+          node.textContent,
           10,
           bold,
           false,
-          false,
           (node as HTMLElement).getAttribute('href') || null
         )
+        leadWithSpace = true
       } else if ((node as HTMLElement).tagName === 'EM') {
         walk(node, true)
+        leadWithSpace = true
+      } else if ((node as HTMLElement).tagName === 'P') {
+        walk(node, bold)
+        doc.addCommand('\\par')
+      } else if (node.nodeType === Node.TEXT_NODE) {
+        appendToDoc(doc, node.textContent, 10, bold)
+
+        leadWithSpace = false
+      } else {
+        walk(node, bold)
       }
+    }
+
+    if ((parent as HTMLElement).tagName === 'UL') {
+      doc.endList()
     }
   }
 
@@ -262,15 +282,13 @@ const bespokeKindle = (deck) => {
       for (const pageIndex of header.pages) {
         const page = pages[pageIndex]
         if (page.full) continue
-        if (page.el.tagName === 'P') {
-          writeDeckPage(
-            doc,
-            script,
-            header.title,
-            page.el,
-            `${sourcePath}/${chapterPath}/${header.figure}`
-          )
-        }
+        writeDeckPage(
+          doc,
+          script,
+          header.title,
+          page.el,
+          `${sourcePath}/${chapterPath}/${header.figure}`
+        )
       }
     }
 
