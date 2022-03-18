@@ -25,16 +25,48 @@ interface MetaItemEntry {
   filetype: string
 }
 
+const tmpDiv = document.createElement('div')
+
+function HTMLEncode(s) {
+  const el = tmpDiv
+  el.innerText = el.textContent = s
+  s = el.innerHTML
+  return s
+}
+
+const epubBodyForHeaderAndPage = (header, headerIndex, page) => {
+  return `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <link rel="stylesheet" href="../Styles/styles.css"></link>
+  <title></title>
+</head>
+
+<body>
+  <h1 class="title">${HTMLEncode(header.title)}</h1>
+	<div class="figure">
+    <img class="figure" src="${header.figure}"></img>
+  </div>
+  ${page.el.outerHTML}
+</body>
+</html>
+  `
+}
+
 // Generates the mobile view, by walking the existing deck and spinning out a whole
 // different DOM.
 const bespokeKindle = (deck) => {
   const [headers, pages] = buildCompactHeadersAndPages(deck)
-  window['downloadKindlePackage'] = () => {
+  window['downloadKindlePackage'] = async () => {
     const ext = new Date().getTime()
     const zip = new JSZip()
     const oebps = zip.folder('OEBPS')
     const metainf = oebps.folder('META-INF')
     const text = oebps.folder('Text')
+    const assets = text.folder('assets')
     const styles = oebps.folder('Styles')
     const title = 'The Network State: How To Start a New Country' // TODO generalize
     const author = 'Balaji Srinivasan' // TODO generalize
@@ -57,6 +89,20 @@ const bespokeKindle = (deck) => {
     const chapters: Array<ChapterEntry> = [
       { title: 'Chapter 1: The Network State', headers },
     ]
+
+    const figures: Array<string | null> = [
+      ...['assets/origins.svg'],
+      ...headers.map((h) => h.figure),
+    ]
+
+    for (const figure of figures) {
+      if (figure === null) continue
+      const filename = figure.replace(/^assets\//, '')
+
+      const res = await fetch(figure)
+      const buf = await res.arrayBuffer()
+      assets.file(filename, buf)
+    }
 
     for (let iChapter = 0; iChapter < chapters.length; iChapter++) {
       const chapter = chapters[iChapter]
@@ -84,18 +130,16 @@ const bespokeKindle = (deck) => {
 
       for (let i = 0; i < chapterHeaders.length; i++) {
         const header = chapterHeaders[i]
-        const headerIndex = headers.indexOf(header)
+        const headerIndex = headers.indexOf(header) + 1
 
         for (let j = 0; j < header.pages.length; j++) {
           const pageIndex = header.pages[j]
           const page = pages[pageIndex]
 
-          if (page.full) continue
-
           subpoints.push({
             id: `${headerIndex}.${pageIndex}`,
             playOrder: playOrder++,
-            label: j === 0 ? `${header.title}` : `${header.title} | ${j + 1}`,
+            label: `${headerIndex}.${j + 1}. ${header.title}`,
             contentSrc: `Text/${headerIndex}_${pageIndex}.xhtml`,
             subpoints: [],
           })
@@ -106,10 +150,17 @@ const bespokeKindle = (deck) => {
             filetype: 'application/xhtml+xml',
           })
 
-          text.file(
-            `${headerIndex}_${pageIndex}.xhtml`,
-            `<html><body>Hello ${headerIndex} ${pageIndex}</body></html>`
-          )
+          if (!page.full) {
+            text.file(
+              `${headerIndex}_${pageIndex}.xhtml`,
+              epubBodyForHeaderAndPage(header, headerIndex, page)
+            )
+          } else {
+            text.file(
+              `${headerIndex}_${pageIndex}.xhtml`,
+              `<html><body>${page.el.outerHTML}</body></html>`
+            )
+          }
         }
       }
     }
@@ -120,7 +171,25 @@ const bespokeKindle = (deck) => {
       filetype: 'text/css',
     })
 
-    styles.file(`styles.css`, 'h1 {}')
+    styles.file(
+      `styles.css`,
+      `
+.title {
+  font-size: 20px;
+  margin: 4px 0px;
+  padding: 0;
+}
+
+div.figure {
+  width: 60%;
+  margin: 0 20%;
+}
+
+img.figure {
+  width: 100%;
+}
+      `
+    )
 
     const walkNavToXml = (navPoint) => {
       return `
