@@ -160,7 +160,7 @@ const addKindleSlideScript = (image, script) => {
   )
   script.push('---- Set image to large')
   script.push(
-    'do script "<dict> <key>Action</key> <string>MoveAndClick</string> <key>ActionName</key> <string>Set to Large</string> <key>ActionUID</key> <integer>1427</integer> <key>Button</key> <integer>0</integer> <key>ClickCount</key> <integer>1</integer> <key>DisplayMatches</key> <false/> <key>DragHorizontalPosition</key> <string>0</string> <key>DragVerticalPosition</key> <string>0</string> <key>Fuzz</key> <integer>15</integer> <key>HorizontalPositionExpression</key> <string>-105</string> <key>MacroActionType</key> <string>MouseMoveAndClick</string> <key>Modifiers</key> <integer>0</integer> <key>MouseDrag</key> <string>None</string> <key>Relative</key> <string>Window</string> <key>RelativeCorner</key> <string>TopRight</string> <key>RestoreMouseLocation</key> <false/> <key>VerticalPositionExpression</key> <string>500</string> </dict>"'
+    'do script "<dict> <key>Action</key> <string>MoveAndClick</string> <key>ActionName</key> <string>Set to Medium</string> <key>ActionUID</key> <integer>1427</integer> <key>Button</key> <integer>0</integer> <key>ClickCount</key> <integer>1</integer> <key>DisplayMatches</key> <false/> <key>DragHorizontalPosition</key> <string>0</string> <key>DragVerticalPosition</key> <string>0</string> <key>Fuzz</key> <integer>15</integer> <key>HorizontalPositionExpression</key> <string>-155</string> <key>MacroActionType</key> <string>MouseMoveAndClick</string> <key>Modifiers</key> <integer>0</integer> <key>MouseDrag</key> <string>None</string> <key>Relative</key> <string>Window</string> <key>RelativeCorner</key> <string>TopRight</string> <key>RestoreMouseLocation</key> <false/> <key>VerticalPositionExpression</key> <string>500</string> </dict>"'
   )
   script.push('-- Select alt text input')
   script.push(
@@ -212,11 +212,8 @@ const writeDeckPage = (doc, script, title, bodyEl: HTMLElement, image) => {
       doc.startList()
     }
 
-    let leadWithSpace = false
-
     for (let i = 0; i < parent.childNodes.length; i++) {
       const node = parent.childNodes[i]
-      const isLast = i === parent.childNodes.length - 1
 
       if ((node as HTMLElement).tagName === 'LI') {
         appendToDoc(doc, node.textContent, 10, bold)
@@ -229,17 +226,14 @@ const writeDeckPage = (doc, script, title, bodyEl: HTMLElement, image) => {
           false,
           (node as HTMLElement).getAttribute('href') || null
         )
-        leadWithSpace = true
       } else if ((node as HTMLElement).tagName === 'EM') {
         walk(node, true)
-        leadWithSpace = true
       } else if ((node as HTMLElement).tagName === 'P') {
         walk(node, bold)
         doc.addCommand('\\par')
+        doc.addCommand('\\par')
       } else if (node.nodeType === Node.TEXT_NODE) {
         appendToDoc(doc, node.textContent, 10, bold)
-
-        leadWithSpace = false
       } else {
         walk(node, bold)
       }
