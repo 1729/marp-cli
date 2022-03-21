@@ -12,7 +12,7 @@ export default function listSplitPlugin(md: MarkdownIt & { marpit: Marpit }) {
 
   md.core.ruler.after(
     'marpit_directives_apply',
-    'marp_cli_skip_mobile',
+    'marp_cli_list_split',
     (state) => {
       if (state.inlineMode) return false
 
