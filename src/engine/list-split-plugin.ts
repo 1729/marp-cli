@@ -2,12 +2,17 @@ import { Marpit } from '@marp-team/marpit'
 import type MarkdownIt from 'markdown-it'
 
 interface ListSplit {
-  listSplit: number
+  listSplits: Array<number>
 }
 
 export default function listSplitPlugin(md: MarkdownIt & { marpit: Marpit }) {
-  md.marpit.customDirectives.local.list_split = (value): ListSplit => {
-    return { listSplit: parseInt(value.toString(), 10) }
+  md.marpit.customDirectives.local.list_splits = (value): ListSplit => {
+    return {
+      listSplits: value
+        .toString()
+        .split(',')
+        .map((v) => parseInt(v, 10)),
+    }
   }
 
   md.core.ruler.after(
@@ -19,8 +24,11 @@ export default function listSplitPlugin(md: MarkdownIt & { marpit: Marpit }) {
       for (const token of state.tokens) {
         const { marpitDirectives } = token.meta || {}
 
-        if (marpitDirectives?.listSplit) {
-          token.attrSet(`data-list-split`, `${marpitDirectives.listSplit}`)
+        if (marpitDirectives?.listSplits) {
+          token.attrSet(
+            `data-list-splits`,
+            `${marpitDirectives.listSplits.join(',')}`
+          )
         }
       }
 

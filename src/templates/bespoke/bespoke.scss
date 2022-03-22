@@ -539,10 +539,11 @@ $progress-height: 5px;
         text-indent: auto;
 
         .bespoke-marp-mobile-page-content {
-          padding: 16px 0 48px 0;
+          padding: 16px 0 48px;
           flex: 1;
           display: flex;
-          justify-content: center;
+          justify-content: flex-start;
+          width: 100%;
           max-width: 1080px;
         }
 

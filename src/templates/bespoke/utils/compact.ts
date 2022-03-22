@@ -23,11 +23,13 @@ export function buildCompactHeadersAndPages(
     const slide = deck.slides[slideIndex]
     if (slide.querySelector("section[data-skip-mobile='true']")) continue
 
-    const listSplitPoint = parseInt(
+    const listSplitPoints = (
       slide
-        .querySelector(`section[data-list-split]`)
-        ?.getAttribute('data-list-split') || '5'
+        .querySelector(`section[data-list-splits]`)
+        ?.getAttribute('data-list-splits') || '5'
     )
+      .split(',')
+      .map((x) => parseInt(x))
 
     const figureEl = slide.querySelector('section img')
     let contentEl
@@ -62,41 +64,83 @@ export function buildCompactHeadersAndPages(
             continue
           if (figureEl.parentElement === pageEl) continue
 
+          // Split up lists into multiple based on split points
           if (
             contentEl.children[i + 1] &&
             (contentEl.children[i + 1].tagName === 'UL' ||
               contentEl.children[i + 1].tagName === 'OL')
           ) {
             pageEl = document.createElement('div')
-            const sublist = document.createElement(
-              contentEl.children[i + 1].tagName
-            )
-
             pageEl.appendChild(contentEl.children[i].cloneNode(true))
-            pageEl.appendChild(sublist)
 
-            const ul = contentEl.children[i + 1]
+            const list = contentEl.children[i + 1]
+            const items = list.children
+            const sublists: Array<HTMLElement> = []
+            const itemsToRemove: Array<HTMLElement> = []
+            let offset = -1
 
-            const lis = ul.children
+            for (let j = 0, l = listSplitPoints.length; j < l + 1; j++) {
+              let sublist: HTMLElement | null = null
+              const splitPoint = listSplitPoints[j]
 
-            for (
-              let j = 0, l = lis.length;
-              j < Math.min(listSplitPoint, l);
-              j++
-            ) {
-              sublist.appendChild(lis[0].cloneNode(true))
-              lis[0].remove()
-              if (lis.length === 0) i++
-              ul.setAttribute('start', i)
+              for (
+                let k = 0;
+                k < (j < l ? splitPoint : 1000) && offset < items.length - 1;
+                k++
+              ) {
+                offset++
+
+                if (j === 0) continue // Skip first list, which is retained in contentEl
+
+                const item = items[offset]
+
+                if (sublist === null) {
+                  sublist = document.createElement(
+                    contentEl.children[i + 1].tagName
+                  )
+                  if (sublist === null) continue
+
+                  sublist.setAttribute('start', `${offset + 1}`)
+                  sublists.push(sublist)
+                }
+
+                sublist.appendChild(item.cloneNode(true))
+                itemsToRemove.push(item)
+              }
             }
-          }
 
-          pages.push({
-            el: pageEl.cloneNode(true) as HTMLElement,
-            slide: slideIndex,
-            page,
-            full: false,
-          })
+            for (const item of itemsToRemove) {
+              list.removeChild(item)
+            }
+
+            pageEl.appendChild(contentEl.children[i + 1].cloneNode(true))
+            i++
+
+            pages.push({
+              el: pageEl.cloneNode(true) as HTMLElement,
+              slide: slideIndex,
+              page,
+              full: false,
+            })
+
+            for (const sublist of sublists) {
+              page++
+
+              pages.push({
+                el: sublist,
+                slide: slideIndex,
+                page,
+                full: false,
+              })
+            }
+          } else {
+            pages.push({
+              el: pageEl.cloneNode(true) as HTMLElement,
+              slide: slideIndex,
+              page,
+              full: false,
+            })
+          }
 
           if (figure != null) {
             // Page with figure
