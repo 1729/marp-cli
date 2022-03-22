@@ -58,6 +58,8 @@ function computeTextFontSize() {
   const sizer = document.querySelector(`.${classPrefix}mobile-sizer`)
   if (sizer === null) return
 
+  sizer.setAttribute('style', `display: flex`)
+
   const sizerContent: HTMLElement | null = sizer.querySelector(
     `.${classPrefix}mobile-page-content`
   )
@@ -104,9 +106,7 @@ function computeTextFontSize() {
     }
   }
 
-  if (sizer !== null) {
-    sizer.remove()
-  }
+  sizer.setAttribute('style', `display: none`)
 }
 
 // Builds the new DOM for the mobile deck
@@ -555,6 +555,7 @@ const bespokeMobile = (deck) => {
 
       // Update position on URL change
       window.addEventListener('popstate', () => navigateFromState())
+      window.addEventListener('resize', () => computeTextFontSize())
 
       computeTextFontSize()
 
