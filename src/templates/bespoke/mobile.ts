@@ -29,18 +29,10 @@ const waitForDOMContentLoaded = function () {
     return waitForEvent('DOMContentLoaded', window)
   }
 }
-
-function coerceHexInt(ns: string) {
-  const coerced = Number.parseInt(ns, 16)
-  return Number.isNaN(coerced) ? null : coerced
-}
-
-function slideAndPageFromLocation(): Array<number> {
+function pageIndexFromLocation(): number {
   const paths = location.pathname.split('/')
   const parts = paths[paths.length - 1].split('.')
-  const slide = coerceHexInt(parts[0].substring(0, 2)) || 0
-  const page = coerceHexInt(parts[0].substring(2)) || 0
-  return [slide, page]
+  return (parseInt(parts[0]) || 1) - 1
 }
 
 // Adds the longest block of text to the temporary sizer div to determine what
@@ -208,6 +200,8 @@ function buildMobileStylesheet() {
   }
 }
 
+let updateLocationDuringPaging = false
+
 // Sets up the requestAnimationFrame handler for dealing with scrolling the header
 function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
   const deckTitle = document.title
@@ -262,13 +256,13 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
     }
 
     // On page scrolls, update the history + title + handle
-    if (Number.isInteger(pageSpaceX)) {
+    if (Number.isInteger(pageSpaceX) && updateLocationDuringPaging) {
       const page = pages[pageSpaceX]
       const slide = page.slide
 
-      const [locationSlide, locationPage] = slideAndPageFromLocation()
+      const locationPageIndex = pageIndexFromLocation()
 
-      if (locationSlide !== slide || locationPage !== page.page) {
+      if (locationPageIndex !== pageSpaceX) {
         const parts = location.pathname.split('/')
         parts.pop()
 
@@ -276,16 +270,12 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
           headers[Math.floor(headerSpaceX)].title
         } | ${deckTitle}`
 
-        const newLocation = {
-          ...location,
-          pathname:
-            parts.join('/') + `/${toPaddedHex(slide)}${toPaddedHex(page.page)}`,
-        }
+        const newPath = pageSpaceX === 0 ? '/' : `/${pageSpaceX + 1}`
 
         setQuery(
           {},
           {
-            location: newLocation,
+            location: { ...location, pathname: parts.join('/') + newPath },
             setter: (...args) => history.pushState(...args),
           }
         )
@@ -332,19 +322,18 @@ const bespokeMobile = (deck) => {
 
   const navigateFromState = () => {
     const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
-    if (pageView === null) return
+    if (pageView === null) return Promise.resolve()
 
-    const [locationSlide, locationPage] = slideAndPageFromLocation()
+    const locationPageIndex = pageIndexFromLocation()
+    const pageWidth = pageView.clientWidth
 
-    for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-      const page = pages[pageIndex]
-      if (page.slide === locationSlide && page.page === locationPage) {
-        const pageWidth = pageView.clientWidth
-        // Not sure why this is needed, otherwise chrome is off by a page on initial load (maybe due to spacer?)
-        setTimeout(() => (pageView.scrollLeft = pageIndex * pageWidth))
-        break
-      }
-    }
+    // Not sure why this is needed, otherwise chrome is off by a page on initial load (maybe due to spacer?)
+    return new Promise<void>((res) => {
+      setTimeout(() => {
+        pageView.scrollLeft = locationPageIndex * pageWidth
+        res()
+      })
+    })
   }
 
   const setupScroller = () => {
@@ -428,8 +417,10 @@ const bespokeMobile = (deck) => {
     waitForDOMContentLoaded().then(() => {
       buildMobileStylesheet()
 
-      // Restore position from URL on load
-      navigateFromState()
+      // Restore position from URL on load, then begin tracking position
+      navigateFromState().then(() => {
+        updateLocationDuringPaging = true
+      })
 
       // Update position on URL change
       window.addEventListener('popstate', () => navigateFromState())
