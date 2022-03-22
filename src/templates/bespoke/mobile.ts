@@ -270,7 +270,14 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
           headers[Math.floor(headerSpaceX)].title
         } | ${deckTitle}`
 
-        const newPath = pageSpaceX === 0 ? '/' : `/${pageSpaceX + 1}`
+        const newPath =
+          pageSpaceX === 0
+            ? '/'
+            : `/${pageSpaceX + 1}${
+                document.location.toString().indexOf('localhost') > -1
+                  ? '.html'
+                  : ''
+              }`
 
         setQuery(
           {},
