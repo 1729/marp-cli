@@ -29,47 +29,48 @@ export function buildCompactHeadersAndPages(
         ?.getAttribute('data-list-split') || '5'
     )
 
-    const figureEl = slide.querySelector("section[data-class='right'] figure")
+    const figureEl = slide.querySelector('section img')
     let contentEl
-
-    let figure: string | null = null
-    let title: string | null = null
 
     if (figureEl) {
       // Slide with figure
-      const cssParts = figureEl.getAttribute('style').split(';')
-      const backgroundImage = cssParts.find((part) =>
-        part.includes('background-image:')
-      )
+      const figure = figureEl.getAttribute('src')
 
-      if (backgroundImage) {
-        figure = backgroundImage.split(':')[1].replace(/['"]+/g, '')
-
-        if (figure !== null && figure.startsWith('url(')) {
-          figure = figure.slice(4, -1)
-        }
-      }
-
-      contentEl = slide.querySelector(
-        "section[data-class='right'] p"
-      )?.parentElement
+      contentEl = slide.querySelector('section p')?.parentElement
 
       if (contentEl) {
-        title = contentEl.querySelector('h1')?.textContent
+        let title
+
+        for (const tagName of ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']) {
+          const titleEl = contentEl.querySelector(tagName)
+          if (titleEl) {
+            title = titleEl.textContent
+            break
+          }
+        }
 
         let page = 0
 
         for (let i = 0; i < contentEl.children.length; i++) {
           let pageEl = contentEl.children[i]
 
-          if (pageEl.tagName !== 'P' && pageEl.tagName !== 'UL') continue
+          if (
+            pageEl.tagName !== 'P' &&
+            pageEl.tagName !== 'UL' &&
+            pageEl.tagName !== 'OL'
+          )
+            continue
+          if (figureEl.parentElement === pageEl) continue
 
           if (
             contentEl.children[i + 1] &&
-            contentEl.children[i + 1].tagName === 'UL'
+            (contentEl.children[i + 1].tagName === 'UL' ||
+              contentEl.children[i + 1].tagName === 'OL')
           ) {
             pageEl = document.createElement('div')
-            const sublist = document.createElement('ul')
+            const sublist = document.createElement(
+              contentEl.children[i + 1].tagName
+            )
 
             pageEl.appendChild(contentEl.children[i].cloneNode(true))
             pageEl.appendChild(sublist)
@@ -86,6 +87,7 @@ export function buildCompactHeadersAndPages(
               sublist.appendChild(lis[0].cloneNode(true))
               lis[0].remove()
               if (lis.length === 0) i++
+              ul.setAttribute('start', i)
             }
           }
 

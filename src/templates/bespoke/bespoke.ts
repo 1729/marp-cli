@@ -34,9 +34,9 @@ const bespokeTemplate = (
   setViewMode()
 
   // Hacky, dispatch based on mobile browser
-  const isMobile =
+  const isMobile = true /*
     /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-    document.location.search === '?mobile'
+    document.location.search === '?mobile'*/
 
   if (isMobile) {
     return bespoke.from(
