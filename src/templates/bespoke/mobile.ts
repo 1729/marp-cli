@@ -371,24 +371,20 @@ function setupNavInputBindings(deck, pages) {
     pageView.scrollLeft = newPageIndex * pageWidth
   })
 
-  let lastWheelNavigationAt = 0
-  let lastWheelDelta
-  let wheelIntervalTimer
-
-  deck.parent.addEventListener('wheel', (e) => {
-    e.preventDefault()
+  document.body.addEventListener('wheel', (ev) => {
+    const e = ev as WheelEvent
 
     // Prevent too sensitive navigation on trackpad and magic mouse
     const currentWheelDelta = Math.sqrt(e.deltaX ** 2 + e.deltaY ** 2)
 
-    if (e.wheelDelta !== undefined) {
-      if (e.webkitForce === undefined) {
+    if (e.deltaY !== undefined) {
+      if (e['webkitForce'] === undefined) {
         // [Chromium]
         // Chromium has (a deprecated) wheelDelta value and it is following the
         // pre-defeind WHEEL_DELTA (=120). It means a required delta for
         // scrolling 3 lines. We have set a threshold as 40 (required to scroll
         // 1 line).
-        if (Math.abs(e.wheelDelta) < 40) return
+        if (Math.abs(e.deltaY) < 40) return
       }
 
       // [WebKit]
@@ -414,22 +410,6 @@ function setupNavInputBindings(deck, pages) {
       if (e.deltaMode === e.DOM_DELTA_PIXEL && currentWheelDelta < 12) return
     }
 
-    // Suppress momentum scrolling by trackpad
-    if (wheelIntervalTimer) clearTimeout(wheelIntervalTimer)
-
-    const interval = 250
-
-    wheelIntervalTimer = setTimeout(() => {
-      lastWheelDelta = 0
-    }, interval)
-
-    const debouncing = Date.now() - lastWheelNavigationAt < interval
-    const attenuated = currentWheelDelta <= lastWheelDelta
-
-    lastWheelDelta = currentWheelDelta
-
-    if (debouncing || attenuated) return
-
     // Navigate
     let direction = 0
 
@@ -447,7 +427,6 @@ function setupNavInputBindings(deck, pages) {
       Math.max(0, locationPageIndex + direction)
     )
 
-    lastWheelNavigationAt = Date.now()
     pageView.scrollLeft = newPageIndex * pageWidth
   })
 }
@@ -549,7 +528,7 @@ const bespokeMobile = (deck) => {
     let startScrollSnapUpperX = 0
     let scrolling = false
 
-    const snapBookToScreenX = (x) => {
+    const snapBookToClientX = (x) => {
       const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
       if (pageView === null) return
       const pageWidth = pageView.clientWidth
@@ -581,7 +560,7 @@ const bespokeMobile = (deck) => {
           )
             return
 
-          snapBookToScreenX(me.screenX)
+          snapBookToClientX(me.clientX)
           e.preventDefault()
           e.stopPropagation()
 
@@ -627,7 +606,7 @@ const bespokeMobile = (deck) => {
       const touchEvent = e as TouchEvent
       if (touchEvent === null) return
       if (touchEvent.targetTouches.length !== 1) return
-      snapBookToScreenX(e.targetTouches[0].clientX)
+      snapBookToClientX(e.targetTouches[0].clientX)
     })
   }
 
