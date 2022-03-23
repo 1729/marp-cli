@@ -9,6 +9,7 @@ export interface PageEntry {
   page: number
   slide: number
   full: boolean
+  chapter: string | null
 }
 
 // Builds page and header entries which describes the top and bottom panes of the
@@ -22,6 +23,11 @@ export function buildCompactHeadersAndPages(
   for (let slideIndex = 0; slideIndex < deck.slides.length; slideIndex++) {
     const slide = deck.slides[slideIndex]
     if (slide.querySelector("section[data-skip-mobile='true']")) continue
+
+    const chapter =
+      slide
+        .querySelector('section[data-chapter]')
+        ?.getAttribute('data-chapter') || null
 
     const listSplitPoints = (
       slide
@@ -121,6 +127,7 @@ export function buildCompactHeadersAndPages(
               slide: slideIndex,
               page,
               full: false,
+              chapter,
             })
 
             for (const sublist of sublists) {
@@ -131,6 +138,7 @@ export function buildCompactHeadersAndPages(
                 slide: slideIndex,
                 page,
                 full: false,
+                chapter,
               })
             }
           } else {
@@ -139,6 +147,7 @@ export function buildCompactHeadersAndPages(
               slide: slideIndex,
               page,
               full: false,
+              chapter,
             })
           }
 
@@ -167,6 +176,7 @@ export function buildCompactHeadersAndPages(
         slide: slideIndex,
         page: 0,
         full: true,
+        chapter,
       })
 
       headers.push({

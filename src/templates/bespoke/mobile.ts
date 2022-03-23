@@ -226,11 +226,9 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
   const chapterEls = document.querySelectorAll(
     `.${classPrefix}mobile-nav .chapters button`
   )
-  const chapterSlides: Array<number> = []
+  const chapterPages: Array<number> = []
   for (let i = 0; i < chapterEls.length; i++) {
-    chapterSlides.push(
-      parseInt(chapterEls[i].getAttribute('data-slide') || '0')
-    )
+    chapterPages.push(parseInt(chapterEls[i].getAttribute('data-page') || '0'))
   }
 
   if (pageView === null) return
@@ -327,11 +325,12 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
       // Nav
       for (let i = 0; i < chapterEls.length; i++) {
         const chapterEl = chapterEls[i]
-        const chapterSlide = chapterSlides[i]
-        const nextChapterSlide =
-          i < chapterSlides.length - 1 ? chapterSlides[i + 1] : Infinity
+        const chapterPage = chapterPages[i]
+        const nextChapterPage =
+          i < chapterPages.length - 1 ? chapterPages[i + 1] : Infinity
 
-        const isActive = slide >= chapterSlide && slide < nextChapterSlide
+        const isActive =
+          pageSpaceX >= chapterPage && pageSpaceX < nextChapterPage
 
         if (chapterEl.classList.contains('active') !== isActive) {
           chapterEl.classList.toggle('active')
@@ -509,33 +508,31 @@ const bespokeMobile = (deck) => {
 
     toggleEl.addEventListener('click', toggleNav)
 
-    const add = (title, slide) => {
+    const add = (title, page) => {
       const el = document.createElement('button')
       el.innerHTML = title
-      el.setAttribute('data-slide', slide.toString())
+      el.setAttribute('data-page', page.toString())
       chaptersEl.appendChild(el)
     }
 
-    add('1. Network State', 0)
-    add('2. Ledger of Record', 5)
-    add('3. Optimalism', 10)
-    add('4. Regulation is Information', 15)
-    add('5. Crowdchoice', 20)
-    add('6. Cryptouniversity', 25)
-    add('7. City in the Cloud', 30)
-    add('8. Decentralized Defense', 35)
-    add('9. Tech Tree', 40)
-    add('10. 1729', 45)
+    add('Cover', 0)
+
+    let iChapter = 0
+
+    for (let i = 0; i < pages.length; i++) {
+      const page = pages[i]
+      if (page.chapter === null) continue
+
+      add(`${iChapter + 1}. ${page.chapter}`, i)
+      iChapter++
+    }
 
     chaptersEl.querySelectorAll('button').forEach((el) => {
       el.addEventListener('click', () => {
-        const slide = parseInt(el.getAttribute('data-slide') as string)
+        const pageIndex = parseInt(el.getAttribute('data-page') as string)
         const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
         if (pageView === null) return
         const pageWidth = pageView.clientWidth
-        const page = pages.find((p) => p.slide === slide)
-        if (page === undefined) return
-        const pageIndex = pages.indexOf(page)
         pageView.scrollLeft = pageIndex * pageWidth
         toggleNav()
       })

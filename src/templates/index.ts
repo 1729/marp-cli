@@ -3,6 +3,7 @@ import path from 'path'
 import { Element, Marpit, Options, RenderResult } from '@marp-team/marpit'
 import listSplitPlugin from '../engine/list-split-plugin'
 import skipMobilePlugin from '../engine/skip-mobile-plugin'
+import chapterPlugin from '../engine/chapter-plugin'
 import transitionPlugin from '../engine/transition-plugin'
 import barePug from './bare/bare.pug'
 import bareScss from './bare/bare.scss'
@@ -95,6 +96,7 @@ export const bespoke: Template<TemplateBespokeOption> = async (opts) => {
     value: (marpit) => {
       marpit.use(listSplitPlugin)
       marpit.use(skipMobilePlugin)
+      marpit.use(chapterPlugin)
       if (opts.transition) marpit.use(transitionPlugin)
     },
   })
