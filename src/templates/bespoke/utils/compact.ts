@@ -40,6 +40,9 @@ export function buildCompactHeadersAndPages(
     const figureEl = slide.querySelector('section img')
     let contentEl
 
+    // Remove svg scaling hack from marp-svg-polyfill that breaks safari
+    slide.querySelector('section')?.removeAttribute('style')
+
     if (figureEl) {
       // Slide with figure
       const figure = figureEl.getAttribute('src')
