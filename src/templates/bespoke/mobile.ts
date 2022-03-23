@@ -260,9 +260,6 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
 
     // On page scrolls, update the history + title + handle + scroller + nav
     if (Number.isInteger(pageSpaceX) && updateLocationDuringPaging) {
-      const page = pages[pageSpaceX]
-      const slide = page.slide
-
       const locationPageIndex = pageIndexFromLocation()
 
       if (locationPageIndex !== pageSpaceX) {
@@ -380,7 +377,6 @@ function setupNavInputBindings(deck, pages) {
 
   deck.parent.addEventListener('wheel', (e) => {
     e.preventDefault()
-    console.log(e.deltaX, e.deltaY)
 
     // Prevent too sensitive navigation on trackpad and magic mouse
     const currentWheelDelta = Math.sqrt(e.deltaX ** 2 + e.deltaY ** 2)
@@ -553,6 +549,51 @@ const bespokeMobile = (deck) => {
     let startScrollSnapUpperX = 0
     let scrolling = false
 
+    const snapBookToScreenX = (x) => {
+      const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
+      if (pageView === null) return
+      const pageWidth = pageView.clientWidth
+
+      let bookOffsetPct = Math.max(
+        0,
+        Math.min(1, (x - sliderEl.offsetLeft) / sliderEl.offsetWidth)
+      )
+
+      // Snap to current page within a few pixels
+      if (x >= startScrollSnapLowerX && x <= startScrollSnapUpperX) {
+        bookOffsetPct = startScrollBookOffset
+      }
+
+      const pageIndex = Math.floor(bookOffsetPct * pages.length)
+      setTimeout(() => (pageView.scrollLeft = pageIndex * pageWidth))
+    }
+
+    for (const event of ['mousedown', 'mousemove', 'mouseup']) {
+      for (const el of [sliderEl, handleEl]) {
+        el.addEventListener(event, (e) => {
+          const me = e as MouseEvent
+          if (me['sourceCapabilities']?.firesTouchEvents) return
+
+          if (
+            !me ||
+            (event === 'mouseup' && (me.buttons & 1) === 1) ||
+            (event !== 'mouseup' && (me.buttons & 1) === 0)
+          )
+            return
+
+          snapBookToScreenX(me.screenX)
+          e.preventDefault()
+          e.stopPropagation()
+
+          if (event === 'mousedown') {
+            tipEl.style.display = 'flex'
+          } else if (event === 'mouseup') {
+            tipEl.style.display = 'none'
+          }
+        })
+      }
+    }
+
     handleEl.addEventListener('touchstart', (e) => {
       scrolling = true
 
@@ -586,24 +627,7 @@ const bespokeMobile = (deck) => {
       const touchEvent = e as TouchEvent
       if (touchEvent === null) return
       if (touchEvent.targetTouches.length !== 1) return
-
-      const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
-      if (pageView === null) return
-      const pageWidth = pageView.clientWidth
-      const tx = e.targetTouches[0].clientX
-
-      let bookOffsetPct = Math.max(
-        0,
-        Math.min(1, (tx - sliderEl.offsetLeft) / sliderEl.offsetWidth)
-      )
-
-      // Snap to current page within a few pixels
-      if (tx >= startScrollSnapLowerX && tx <= startScrollSnapUpperX) {
-        bookOffsetPct = startScrollBookOffset
-      }
-
-      const pageIndex = Math.floor(bookOffsetPct * pages.length)
-      setTimeout(() => (pageView.scrollLeft = pageIndex * pageWidth))
+      snapBookToScreenX(e.targetTouches[0].clientX)
     })
   }
 
