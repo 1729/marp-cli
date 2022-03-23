@@ -223,6 +223,15 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
   const pageLabelEl = document.querySelector(
     `.${classPrefix}mobile-scroller .label`
   ) as HTMLElement
+  const chapterEls = document.querySelectorAll(
+    `.${classPrefix}mobile-nav .chapters button`
+  )
+  const chapterSlides: Array<number> = []
+  for (let i = 0; i < chapterEls.length; i++) {
+    chapterSlides.push(
+      parseInt(chapterEls[i].getAttribute('data-slide') || '0')
+    )
+  }
 
   if (pageView === null) return
   if (headerView === null) return
@@ -259,7 +268,7 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
       headerView.scrollLeft = scroll
     }
 
-    // On page scrolls, update the history + title + handle
+    // On page scrolls, update the history + title + handle + scroller + nav
     if (Number.isInteger(pageSpaceX) && updateLocationDuringPaging) {
       const page = pages[pageSpaceX]
       const slide = page.slide
@@ -292,6 +301,7 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
         )
       }
 
+      // Scroller
       const hitboxMargin = 10
       const handleOffset =
         (pageSpaceX / pages.length) * sliderEl.clientWidth +
@@ -312,6 +322,20 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
 
       if (pageLabelEl.innerHTML !== pageLabel) {
         pageLabelEl.innerHTML = pageLabel
+      }
+
+      // Nav
+      for (let i = 0; i < chapterEls.length; i++) {
+        const chapterEl = chapterEls[i]
+        const chapterSlide = chapterSlides[i]
+        const nextChapterSlide =
+          i < chapterSlides.length - 1 ? chapterSlides[i + 1] : Infinity
+
+        const isActive = slide >= chapterSlide && slide < nextChapterSlide
+
+        if (chapterEl.classList.contains('active') !== isActive) {
+          chapterEl.classList.toggle('active')
+        }
       }
     }
 
@@ -446,11 +470,6 @@ function setupNavInputBindings(deck, pages) {
 const bespokeMobile = (deck) => {
   const [headers, pages] = buildCompactHeadersAndPages(deck)
 
-  // Disable desktop slides
-  deck.parent.setAttribute('style', 'display: none;')
-  buildMobileDOM(headers, pages)
-  runRAF(headers, pages)
-
   const navigateFromState = () => {
     const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
     if (pageView === null) return Promise.resolve()
@@ -463,6 +482,62 @@ const bespokeMobile = (deck) => {
       setTimeout(() => {
         pageView.scrollLeft = locationPageIndex * pageWidth
         res()
+      })
+    })
+  }
+
+  const setupNav = () => {
+    const navEl = document.querySelector(
+      `.${classPrefix}mobile-nav`
+    ) as HTMLElement
+
+    const chaptersEl = document.querySelector(
+      `.${classPrefix}mobile-nav .chapters`
+    ) as HTMLElement
+
+    let toggled = false
+    const toggleEl = document.querySelector(
+      `.${classPrefix}mobile-nav .toggle`
+    ) as HTMLElement
+
+    const toggleNav = () => {
+      toggled = !toggled
+      navEl.classList.toggle('toggled')
+      chaptersEl.style.display = toggled ? 'flex' : 'none'
+      toggleEl.innerHTML = !toggled ? '☰' : '✕'
+    }
+
+    toggleEl.addEventListener('click', toggleNav)
+
+    const add = (title, slide) => {
+      const el = document.createElement('button')
+      el.innerHTML = title
+      el.setAttribute('data-slide', slide.toString())
+      chaptersEl.appendChild(el)
+    }
+
+    add('1. Network State', 0)
+    add('2. Ledger of Record', 5)
+    add('3. Optimalism', 10)
+    add('4. Regulation is Information', 15)
+    add('5. Crowdchoice', 20)
+    add('6. Cryptouniversity', 25)
+    add('7. City in the Cloud', 30)
+    add('8. Decentralized Defense', 35)
+    add('9. Tech Tree', 40)
+    add('10. 1729', 45)
+
+    chaptersEl.querySelectorAll('button').forEach((el) => {
+      el.addEventListener('click', () => {
+        const slide = parseInt(el.getAttribute('data-slide') as string)
+        const pageView = document.querySelector(`.${classPrefix}mobile-pages`)
+        if (pageView === null) return
+        const pageWidth = pageView.clientWidth
+        const page = pages.find((p) => p.slide === slide)
+        if (page === undefined) return
+        const pageIndex = pages.indexOf(page)
+        pageView.scrollLeft = pageIndex * pageWidth
+        toggleNav()
       })
     })
   }
@@ -542,6 +617,13 @@ const bespokeMobile = (deck) => {
       setTimeout(() => (pageView.scrollLeft = pageIndex * pageWidth))
     })
   }
+
+  // Disable desktop slides
+  deck.parent.setAttribute('style', 'display: none;')
+  buildMobileDOM(headers, pages)
+  setupScroller()
+  setupNav()
+  runRAF(headers, pages)
 
   // Wait a frame so layout runs
   setTimeout(() => {
