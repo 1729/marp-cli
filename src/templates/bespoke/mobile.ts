@@ -15,14 +15,6 @@ const waitForEvent = function (eventName, eventObj) {
   })
 }
 
-const toPaddedHex = (num: number) => {
-  if (num < 16) {
-    return `0${num.toString(16)}`.toUpperCase()
-  } else {
-    return num.toString(16).toUpperCase()
-  }
-}
-
 const waitForDOMContentLoaded = function () {
   if (
     document.readyState === 'complete' ||
@@ -308,7 +300,7 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
 
       const handleLeft = `${Math.floor(handleOffset)}px`
       const tipLeft = `${Math.floor(handleOffset - 32)}px`
-      const pageLabel = `${toPaddedHex(slide)}${toPaddedHex(page.page)}`
+      const pageLabel = pageSpaceX === 0 ? 'Cover' : (pageSpaceX + 1).toString()
 
       if (handleEl.style.left !== handleLeft) {
         handleEl.style.left = handleLeft
