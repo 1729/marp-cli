@@ -74,6 +74,25 @@ export function buildCompactHeadersAndPages(
             continue
           if (figureEl.parentElement === pageEl) continue
 
+          const pushHeader = () => {
+            if (figure != null) {
+              // Page with figure
+              if (
+                headers.length === 0 ||
+                headers[headers.length - 1].figure !== figure
+              ) {
+                headers.push({
+                  title,
+                  pageTitle: title,
+                  figure,
+                  pages: [pages.length - 1],
+                })
+              } else {
+                headers[headers.length - 1].pages.push(pages.length - 1)
+              }
+            }
+          }
+
           // Split up lists into multiple based on split points
           if (
             contentEl.children[i + 1] &&
@@ -134,6 +153,8 @@ export function buildCompactHeadersAndPages(
               chapter,
             })
 
+            pushHeader()
+
             for (const sublist of sublists) {
               page++
 
@@ -144,6 +165,8 @@ export function buildCompactHeadersAndPages(
                 full: false,
                 chapter,
               })
+
+              pushHeader()
             }
           } else {
             pages.push({
@@ -153,23 +176,8 @@ export function buildCompactHeadersAndPages(
               full: false,
               chapter,
             })
-          }
 
-          if (figure != null) {
-            // Page with figure
-            if (
-              headers.length === 0 ||
-              headers[headers.length - 1].figure !== figure
-            ) {
-              headers.push({
-                title,
-                pageTitle: title,
-                figure,
-                pages: [pages.length - 1],
-              })
-            } else {
-              headers[headers.length - 1].pages.push(pages.length - 1)
-            }
+            pushHeader()
           }
 
           page++
