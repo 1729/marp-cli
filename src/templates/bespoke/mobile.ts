@@ -34,8 +34,10 @@ function pageIndexFromLocation(): number {
 // Adds the longest block of text to the temporary sizer div to determine what
 // is the minimum font size needed to avoid vertical scrolling across the whole
 // book. The function then replaces the CSS variable --marpit-root-font-size appropriately
-function computeTextFontSize() {
+function computeTextFontSize(pages) {
   let longest = ''
+
+  let chapter
 
   document
     .querySelectorAll(`.${classPrefix}mobile-page-content p`)
@@ -44,6 +46,17 @@ function computeTextFontSize() {
 
       if (text !== null && text.length > longest.length) {
         longest = text + ' Extra Buffer Text'
+        const pageIndex = parseInt(
+          pageEl.parentElement?.parentElement?.getAttribute(
+            'data-page-index'
+          ) || '-1'
+        )
+        for (let i = pageIndex; i > 0; i--) {
+          if (pages[i].chapter !== null) {
+            chapter = pages[i].chapter
+            break
+          }
+        }
       }
     })
 
@@ -67,6 +80,13 @@ function computeTextFontSize() {
   for (const fontSize of [28, 26, 24, 20, 18, 16, 14, 12, 8]) {
     sizerContent.setAttribute('style', `font-size: ${fontSize}px`)
     sizerContent.innerText = longest
+
+    console.log(
+      `Computing font size based on:\nChapter: ${chapter}\nSnippet: "${longest.substring(
+        0,
+        50
+      )}"\nLength: ${longest.length}`
+    )
 
     if (sizer.scrollHeight <= sizer.clientHeight) {
       bestSize = fontSize
@@ -151,7 +171,9 @@ function buildMobileDOM(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
     headerView.appendChild(headerEl)
   }
 
-  for (const { el: pageEl, full } of pages) {
+  for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+    const { el: pageEl, full } = pages[pageIndex]
+
     if (full) {
       pageView.appendChild(pageEl.children[0].cloneNode(true))
     } else {
@@ -162,6 +184,7 @@ function buildMobileDOM(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
       const contentEl = document.createElement('div')
       contentEl.classList.add(`${classPrefix}mobile-page-content`)
       sectionEl.appendChild(contentEl)
+      sectionEl.setAttribute('data-page-index', pageIndex.toString())
 
       contentEl.appendChild(pageEl)
       pageView.appendChild(sectionEl)
@@ -629,9 +652,9 @@ const bespokeMobile = (deck) => {
 
       // Update position on URL change
       window.addEventListener('popstate', () => navigateFromState())
-      window.addEventListener('resize', () => computeTextFontSize())
+      window.addEventListener('resize', () => computeTextFontSize(pages))
 
-      computeTextFontSize()
+      computeTextFontSize(pages)
 
       setupScroller()
       setupNavInputBindings(deck, pages)
