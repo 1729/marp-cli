@@ -9,6 +9,8 @@ const isMobile =
   /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
   document.location.search === '?mobile'
 
+const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1
+
 const waitForEvent = function (eventName, eventObj) {
   return new Promise((resolve) => {
     eventObj.addEventListener(eventName, resolve, { once: true })
@@ -77,16 +79,16 @@ function computeTextFontSize(pages) {
 
   let bestSize = 0
 
+  console.log(
+    `Computing font size based on:\nChapter: ${chapter}\nSnippet: "${longest.substring(
+      0,
+      50
+    )}"\nLength: ${longest.length}`
+  )
+
   for (const fontSize of [28, 26, 24, 20, 18, 16, 14, 12, 8]) {
     sizerContent.setAttribute('style', `font-size: ${fontSize}px`)
     sizerContent.innerText = longest
-
-    console.log(
-      `Computing font size based on:\nChapter: ${chapter}\nSnippet: "${longest.substring(
-        0,
-        50
-      )}"\nLength: ${longest.length}`
-    )
 
     if (sizer.scrollHeight <= sizer.clientHeight) {
       bestSize = fontSize
@@ -139,6 +141,12 @@ function buildMobileDOM(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
 
   const pageView = document.createElement('div')
   pageView.classList.add(`${classPrefix}mobile-pages`)
+
+  if (isFirefox) {
+    // Firefox horizontal scrolling is busted
+    pageView.classList.add('no-x-scroll')
+  }
+
   root.appendChild(pageView)
 
   const sizerEl = document.createElement('section')
@@ -394,50 +402,42 @@ function setupNavInputBindings(deck, pages) {
     pageView.scrollLeft = newPageIndex * pageWidth
   })
 
+  let lastWheelTime = 0
+  let isTrackpad = false
+
   document.body.addEventListener('wheel', (ev) => {
+    // Rate limit trackpad scroll events
+    if (isTrackpad && performance.now() - lastWheelTime < 500) return
+    if (performance.now() - lastWheelTime < 100) return
+
+    // Only firefox will do wheel events on a trackpad
+    if (isTrackpad && !isFirefox) return
+
+    lastWheelTime = performance.now()
+
+    // Hack, two finger drag on trackpad detected by seeing low deltas
+    if (
+      !isTrackpad &&
+      ((ev.deltaY !== 0 && Math.abs(ev.deltaY) <= 3) ||
+        (ev.deltaX !== 0 && Math.abs(ev.deltaX) <= 3))
+    ) {
+      isTrackpad = true
+    }
+
     const e = ev as WheelEvent
 
-    // Prevent too sensitive navigation on trackpad and magic mouse
-    const currentWheelDelta = Math.sqrt(e.deltaX ** 2 + e.deltaY ** 2)
-
-    if (e.deltaY !== undefined) {
-      if (e['webkitForce'] === undefined) {
-        // [Chromium]
-        // Chromium has (a deprecated) wheelDelta value and it is following the
-        // pre-defeind WHEEL_DELTA (=120). It means a required delta for
-        // scrolling 3 lines. We have set a threshold as 40 (required to scroll
-        // 1 line).
-        if (Math.abs(e.deltaY) < 40) return
-      }
-
-      // [WebKit]
-      // WebKit's wheelDelta value will just return 3 times numbers from the
-      // standard delta values, so using the standard delta will be better
-      // than depending on deprecated values.
-      //
-      // Both of Chromium and Webkit are starting scroll from 4 pixels by a
-      // event of the mouse wheel notch. If set a threshold to require 1 line
-      // of scroll, the navigation by mouse wheel may be insensitive. So we
-      // have set a threshold as 4 pixels.
-      //
-      // It means Safari is more sensitive to Multi-touch devices than other
-      // browsers.
-      if (e.deltaMode === e.DOM_DELTA_PIXEL && currentWheelDelta < 4) return
-    } else {
-      // [Firefox]
-      // Firefox only has delta values provided by the standard wheel event.
-      //
-      // It will report 36 as the delta of the minimum tick for the regular
-      // mouse wheel because Firefox's default font size is 12px and 36px is
-      // required delta to scroll 3 lines at once.
-      if (e.deltaMode === e.DOM_DELTA_PIXEL && currentWheelDelta < 12) return
-    }
+    // Firefox disabled overflow scroll along x, so use wheel
+    const delta = isFirefox
+      ? Math.abs(e.deltaY) > Math.abs(e.deltaX)
+        ? e.deltaY
+        : e.deltaX
+      : e.deltaY
 
     // Navigate
     let direction = 0
 
-    if (e.deltaX > 0 || e.deltaY > 0) direction = 1
-    if (e.deltaX < 0 || e.deltaY < 0) direction = -1
+    if (delta > 0) direction = 1
+    if (delta < 0) direction = -1
     if (!direction) return
 
     const pageView = document.querySelector(`.${classPrefix}mobile-pages`)

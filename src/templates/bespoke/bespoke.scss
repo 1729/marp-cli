@@ -17,7 +17,7 @@ $progress-height: 5px;
   }
 
   body {
-    background: #000;
+    background: white;
     overflow: hidden;
   }
 
@@ -512,6 +512,11 @@ $progress-height: 5px;
       scroll-snap-coordinate: 0 0;
       scroll-snap-points-x: repeat(100%);
       scroll-snap-type: x mandatory;
+
+      &.no-x-scroll {
+        scroll-snap-type: none;
+        overflow-x: hidden;
+      }
 
       &::-webkit-scrollbar {
         display: none;
