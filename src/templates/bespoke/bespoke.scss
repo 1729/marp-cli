@@ -567,6 +567,10 @@ $progress-height: 5px;
       section.bespoke-marp-mobile-page {
         padding: 16px 24px;
       }
+
+      section:not(.bespoke-marp-mobile-page) p {
+        align-self: flex-start;
+      }
     }
   }
 
@@ -647,7 +651,7 @@ $progress-height: 5px;
     position: fixed;
     right: 0;
     top: 0;
-    width: 300px;
+    width: 340px;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -666,6 +670,7 @@ $progress-height: 5px;
       flex: 0 0 auto;
 
       .toggle {
+        cursor: pointer;
         pointer-events: auto;
         min-height: 32px;
         margin: 20px;
@@ -701,7 +706,12 @@ $progress-height: 5px;
         vertical-align: middle;
         pointer-events: auto;
         display: flex;
-        align-items: center
+        align-items: center;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #eee;
       }
 
       button.active {
