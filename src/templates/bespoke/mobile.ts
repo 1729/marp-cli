@@ -97,7 +97,7 @@ function computeTextFontSize(pages) {
   // Scale the fonts using the marpit root font size CSS variable
   for (let i = 0; i < document.styleSheets.length; i++) {
     const styleSheet = document.styleSheets[i]
-    const varRegex = /--marpit-root-font-size:[0-9]+px/
+    const varRegex = /--marpit-root-font-size: *[0-9]+px/
 
     for (let j = 0; j < styleSheet.cssRules.length; j++) {
       const rule = styleSheet.cssRules[j] as CSSStyleRule
