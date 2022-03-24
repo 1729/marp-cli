@@ -621,7 +621,8 @@ $progress-height: 5px;
         padding: 18px 0;
 
         .box {
-          background-color: rgba(0, 0, 0, 20%);
+          background-color: #ccc;
+          mix-blend-mode: difference;
           width: 100%;
           height: 100%;
         }
