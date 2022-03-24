@@ -267,7 +267,7 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
         parts.pop()
 
         document.title = `${
-          headers[Math.floor(headerSpaceX)].title
+          headers[Math.floor(headerSpaceX)].pageTitle
         } | ${deckTitle}`
 
         const newPath =

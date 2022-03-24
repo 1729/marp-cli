@@ -1,5 +1,6 @@
 export interface HeaderEntry {
   title: string | null
+  pageTitle: string | null
   figure: string | null
   pages: Array<number>
 }
@@ -162,6 +163,7 @@ export function buildCompactHeadersAndPages(
             ) {
               headers.push({
                 title,
+                pageTitle: title,
                 figure,
                 pages: [pages.length - 1],
               })
@@ -182,8 +184,19 @@ export function buildCompactHeadersAndPages(
         chapter,
       })
 
+      let pageTitle = ''
+
+      for (const tagName of ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']) {
+        const titleEl = slide.children[0].querySelector(tagName)
+        if (titleEl) {
+          pageTitle = titleEl.textContent
+          break
+        }
+      }
+
       headers.push({
         title: null,
+        pageTitle,
         figure: null,
         pages: [pages.length - 1],
       })
