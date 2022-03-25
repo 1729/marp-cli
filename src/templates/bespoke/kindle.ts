@@ -1,10 +1,6 @@
 import JSZip from '../../utils/jszip'
 
-import {
-  HeaderEntry,
-  //PageEntry,
-  buildCompactHeadersAndPages,
-} from './utils/compact'
+import { buildCompactHeadersAndPages } from './utils/compact'
 
 interface NavPoint {
   id: string
@@ -12,11 +8,6 @@ interface NavPoint {
   label: string
   contentSrc: string
   subpoints: Array<NavPoint>
-}
-
-interface ChapterEntry {
-  title: string
-  headers: Array<HeaderEntry>
 }
 
 interface MetaItemEntry {
@@ -60,6 +51,7 @@ const epubBodyForHeaderAndPage = (header, headerIndex, page) => {
 // different DOM.
 const bespokeKindle = (deck) => {
   const [headers, pages] = buildCompactHeadersAndPages(deck)
+
   window['downloadKindlePackage'] = async () => {
     const ext = new Date().getTime()
     const zip = new JSZip()
@@ -86,10 +78,6 @@ const bespokeKindle = (deck) => {
 
     text.file('cover.xhtml', '<html><body>Cover</body></html>')
 
-    const chapters: Array<ChapterEntry> = [
-      { title: 'Chapter 1: The Network State', headers },
-    ]
-
     const figures: Array<string | null> = [
       ...['assets/origins.svg'],
       ...headers.map((h) => h.figure),
@@ -97,70 +85,64 @@ const bespokeKindle = (deck) => {
 
     for (const figure of figures) {
       if (figure === null) continue
-      const filename = figure.replace(/^assets\//, '')
+      const filename = decodeURIComponent(figure).replace(/^assets\//, '')
 
       const res = await fetch(figure)
       const buf = await res.arrayBuffer()
       assets.file(filename, buf)
     }
 
-    for (let iChapter = 0; iChapter < chapters.length; iChapter++) {
-      const chapter = chapters[iChapter]
-      const chapterHeaders = chapter.headers
-      const subpoints: Array<NavPoint> = []
+    let subpoints: Array<NavPoint> = []
+    let iChapter = 0
 
-      navPoints.push({
-        id: `chapter-${iChapter + 1}`,
-        playOrder: playOrder++,
-        label: chapters[iChapter].title,
-        contentSrc: `Text/chapter-${iChapter + 1}.xhtml`,
-        subpoints,
-      })
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i]
+      const headerIndex = i
 
-      metaItems.push({
-        id: `chapter-${iChapter + 1}`,
-        filename: `Text/chapter-${iChapter + 1}.xhtml`,
-        filetype: 'application/xhtml+xml',
-      })
+      for (let j = 0; j < header.pages.length; j++) {
+        const pageIndex = header.pages[j]
+        if (pageIndex === 0) continue // Skip cover page
 
-      text.file(
-        `chapter-${iChapter + 1}.xhtml`,
-        `<html><body>Chapter ${iChapter + 1}</body></html>`
-      )
+        const page = pages[pageIndex]
 
-      for (let i = 0; i < chapterHeaders.length; i++) {
-        const header = chapterHeaders[i]
-        const headerIndex = headers.indexOf(header) + 1
+        if (page.chapter) {
+          subpoints = []
 
-        for (let j = 0; j < header.pages.length; j++) {
-          const pageIndex = header.pages[j]
-          const page = pages[pageIndex]
+          navPoints.push({
+            id: `${headerIndex}.${pageIndex}`,
+            playOrder: playOrder++,
+            label: `Chapter ${iChapter + 1}: ${page.chapter}`,
+            contentSrc: `Text/${headerIndex}_${pageIndex}.xhtml`,
+            subpoints,
+          })
 
+          iChapter++
+        } else {
           subpoints.push({
             id: `${headerIndex}.${pageIndex}`,
             playOrder: playOrder++,
-            label: `${headerIndex}.${j + 1}. ${header.title}`,
+            label: `${pageIndex + 1}. ${header.pageTitle}`,
             contentSrc: `Text/${headerIndex}_${pageIndex}.xhtml`,
             subpoints: [],
           })
+        }
 
-          metaItems.push({
-            id: `page-${headerIndex}_${pageIndex}`,
-            filename: `Text/${headerIndex}_${pageIndex}.xhtml`,
-            filetype: 'application/xhtml+xml',
-          })
+        metaItems.push({
+          id: `page-${headerIndex}_${pageIndex}`,
+          filename: `Text/${headerIndex}_${pageIndex}.xhtml`,
+          filetype: 'application/xhtml+xml',
+        })
 
-          if (!page.full) {
-            text.file(
-              `${headerIndex}_${pageIndex}.xhtml`,
-              epubBodyForHeaderAndPage(header, headerIndex, page)
-            )
-          } else {
-            text.file(
-              `${headerIndex}_${pageIndex}.xhtml`,
-              `<html><body>${page.el.outerHTML}</body></html>`
-            )
-          }
+        if (!page.full) {
+          text.file(
+            `${headerIndex}_${pageIndex}.xhtml`,
+            epubBodyForHeaderAndPage(header, headerIndex, page)
+          )
+        } else {
+          text.file(
+            `${headerIndex}_${pageIndex}.xhtml`,
+            `<html><body>${page.el.outerHTML}</body></html>`
+          )
         }
       }
     }
@@ -259,10 +241,6 @@ img.figure {
         </manifest>
         <spine toc="ncx">
           <itemref idref="cover" linear="no" />
-          ${chapters.map(
-            (chapter, i) => `
-            <itemref idref="chapter-${i + 1}" />`
-          )}
         </spine>
         <reference href="Text/cover.xhtml" type="cover" title="Cover" />
       </package>

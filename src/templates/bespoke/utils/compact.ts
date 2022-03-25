@@ -102,7 +102,7 @@ export function buildCompactHeadersAndPages(
             pageEl = document.createElement('div')
             pageEl.appendChild(contentEl.children[i].cloneNode(true))
 
-            const list = contentEl.children[i + 1]
+            const list = contentEl.children[i + 1].cloneNode(true)
             const items = list.children
             const sublists: Array<HTMLElement> = []
             const itemsToRemove: Array<HTMLElement> = []
@@ -142,7 +142,7 @@ export function buildCompactHeadersAndPages(
               list.removeChild(item)
             }
 
-            pageEl.appendChild(contentEl.children[i + 1].cloneNode(true))
+            pageEl.appendChild(list)
             i++
 
             pages.push({
