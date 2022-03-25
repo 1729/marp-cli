@@ -59,8 +59,9 @@ const bespokeKindle = (deck) => {
     const oebps = zip.folder('OEBPS')
     const metainf = oebps.folder('META-INF')
     const text = oebps.folder('Text')
-    const assets = text.folder('assets')
+    const textAssets = text.folder('assets')
     const styles = oebps.folder('Styles')
+    const styleAssets = styles.folder('assets')
     const title = 'The Network State: How To Start a New Country' // TODO generalize
     const author = 'Balaji Srinivasan' // TODO generalize
     const description =
@@ -84,17 +85,55 @@ const bespokeKindle = (deck) => {
       ...headers.map((h) => h.figure),
     ]
 
-    for (const figure of figures) {
+    for (let i = 0; i < figures.length; i++) {
+      const figure = figures[i]
       if (figure === null) continue
+
       const filename = decodeURIComponent(figure).replace(/^assets\//, '')
 
       const res = await fetch(figure)
       const buf = await res.arrayBuffer()
-      assets.file(filename, buf)
+      textAssets.file(filename, buf)
+    }
+
+    const fontRules: Array<string> = []
+
+    // Download fonts
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      const styleSheet = document.styleSheets[i]
+
+      for (let j = 0; j < styleSheet.cssRules.length; j++) {
+        const rule = styleSheet.cssRules[j] as CSSStyleRule
+
+        if (rule instanceof CSSFontFaceRule) {
+          const fontFaceRule = rule as CSSFontFaceRule
+
+          if (fontFaceRule) {
+            for (const src of fontFaceRule.style['src'].split(',')) {
+              const path = src
+                .trim()
+                .replace(/url\(['"]?/, '')
+                .replace(/['"]?\).*$/, '')
+
+              if (path.startsWith('assets')) {
+                const filename = decodeURIComponent(path).replace(
+                  /^assets\//,
+                  ''
+                )
+
+                const res = await fetch(path)
+                const buf = await res.arrayBuffer()
+                styleAssets.file(filename, buf)
+
+                fontRules.push(fontFaceRule.cssText)
+              }
+            }
+          }
+        }
+      }
     }
 
     let subpoints: Array<NavPoint> = []
-    let iChapter = 0
 
     for (let i = 0; i < headers.length; i++) {
       const header = headers[i]
@@ -116,8 +155,6 @@ const bespokeKindle = (deck) => {
             contentSrc: `Text/${headerIndex}_${pageIndex}.xhtml`,
             subpoints,
           })
-
-          iChapter++
         } else if (j === 0) {
           // Emit entry for each header
           subpoints.push({
@@ -158,11 +195,15 @@ const bespokeKindle = (deck) => {
     styles.file(
       `styles.css`,
       `
+
+${fontRules.join('\n')}
+
 .title {
   font-size: 1.5em;
   margin: 0.25em 0;
   padding: 0;
   text-align: left;
+  font-family: 'Suisse Works';
 }
 
 .figure {
