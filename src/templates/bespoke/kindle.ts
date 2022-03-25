@@ -111,17 +111,18 @@ const bespokeKindle = (deck) => {
           navPoints.push({
             id: `${headerIndex}.${pageIndex}`,
             playOrder: playOrder++,
-            label: `Chapter ${iChapter + 1}: ${page.chapter}`,
+            label: `${page.chapter}`,
             contentSrc: `Text/${headerIndex}_${pageIndex}.xhtml`,
             subpoints,
           })
 
           iChapter++
-        } else {
+        } else if (j === 0) {
+          // Emit entry for each header
           subpoints.push({
             id: `${headerIndex}.${pageIndex}`,
             playOrder: playOrder++,
-            label: `${pageIndex + 1}. ${header.pageTitle}`,
+            label: `${header.pageTitle}`,
             contentSrc: `Text/${headerIndex}_${pageIndex}.xhtml`,
             subpoints: [],
           })
@@ -157,8 +158,8 @@ const bespokeKindle = (deck) => {
       `styles.css`,
       `
 .title {
-  font-size: 20px;
-  margin: 4px 0px;
+  font-size: 1.5em;
+  margin: 0.25em 0;
   padding: 0;
 }
 
