@@ -38,8 +38,9 @@ const epubBodyForHeaderAndPage = (header, headerIndex, page) => {
 
 <body>
   <h1 class="title">${HTMLEncode(header.title)}</h1>
-	<div class="figure">
-    <img class="figure" src="${header.figure}"></img>
+    <div class="figure">
+      <img src="${header.figure}">
+    </img>
   </div>
   ${page.el.outerHTML}
 </body>
@@ -161,14 +162,15 @@ const bespokeKindle = (deck) => {
   font-size: 1.5em;
   margin: 0.25em 0;
   padding: 0;
+  text-align: left;
 }
 
-div.figure {
+.figure {
   width: 60%;
   margin: 0 20%;
 }
 
-img.figure {
+.figure img {
   width: 100%;
 }
       `

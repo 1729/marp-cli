@@ -469,6 +469,10 @@ $progress-height: 5px;
       height: 50%;
       z-index: 2;
 
+      // HACK - Style injection is not able to deal with header
+      // For now just put OSTN header font here.
+      font-family: 'Suisse Works', serif;
+
       section {
         width: 100vw;
         height: 100%;
