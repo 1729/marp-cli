@@ -28,9 +28,15 @@ const waitForDOMContentLoaded = function () {
   }
 }
 function pageIndexFromLocation(): number {
-  const paths = location.pathname.split('/')
-  const parts = paths[paths.length - 1].split('.')
-  return (parseInt(parts[0]) || 1) - 1
+  const isLocal = document.location.toString().indexOf('localhost') > -1
+
+  if (isLocal) {
+    return parseInt(document.location.hash.substring(1) || '1') - 1
+  } else {
+    const paths = location.pathname.split('/')
+    const parts = paths[paths.length - 1].split('.')
+    return (parseInt(parts[0]) || 1) - 1
+  }
 }
 
 // Adds the longest block of text to the temporary sizer div to determine what
@@ -294,29 +300,40 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
       const locationPageIndex = pageIndexFromLocation()
 
       if (locationPageIndex !== pageSpaceX) {
-        const parts = location.pathname.split('/')
-        parts.pop()
-
         document.title = `${
           headers[Math.floor(headerSpaceX)].pageTitle
         } | ${deckTitle}`
 
-        const newPath =
-          pageSpaceX === 0
-            ? '/'
-            : `/${pageSpaceX + 1}${
-                document.location.toString().indexOf('localhost') > -1
-                  ? '.html'
-                  : ''
-              }`
+        const isLocal = document.location.toString().indexOf('localhost') > -1
 
-        setQuery(
-          {},
-          {
-            location: { ...location, pathname: parts.join('/') + newPath },
-            setter: (...args) => history.pushState(...args),
-          }
-        )
+        if (isLocal) {
+          setQuery(
+            {},
+            {
+              location: {
+                ...location,
+                hash: pageSpaceX === 0 ? '' : `#${pageSpaceX + 1}`,
+              },
+              setter: (...args) => history.pushState(...args),
+            }
+          )
+        } else {
+          const parts = location.pathname.split('/')
+          parts.pop()
+
+          setQuery(
+            {},
+            {
+              location: {
+                ...location,
+                pathname:
+                  parts.join('/') +
+                  (pageSpaceX === 0 ? '/' : `/${pageSpaceX + 1}`),
+              },
+              setter: (...args) => history.pushState(...args),
+            }
+          )
+        }
       }
 
       // Scroller
