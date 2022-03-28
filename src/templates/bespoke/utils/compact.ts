@@ -23,7 +23,7 @@ export function buildCompactHeadersAndPages(
 
   for (let slideIndex = 0; slideIndex < deck.slides.length; slideIndex++) {
     const slide = deck.slides[slideIndex]
-    if (slide.querySelector("section[data-skip-mobile='true']")) continue
+    if (slide.querySelector("section[data-skip='true']")) continue
 
     const chapter =
       slide
