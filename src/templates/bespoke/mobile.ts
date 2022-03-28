@@ -28,9 +28,10 @@ const waitForDOMContentLoaded = function () {
   }
 }
 function pageIndexFromLocation(): number {
-  const isLocal = document.location.toString().indexOf('localhost') > -1
+  const isLocalMarp =
+    document.location.toString().indexOf('localhost:8080') > -1
 
-  if (isLocal) {
+  if (isLocalMarp) {
     return parseInt(document.location.hash.substring(1) || '1') - 1
   } else {
     const paths = location.pathname.split('/')
@@ -304,9 +305,12 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
           headers[Math.floor(headerSpaceX)].pageTitle
         } | ${deckTitle}`
 
-        const isLocal = document.location.toString().indexOf('localhost') > -1
+        const isLocalMarp =
+          document.location.toString().indexOf('localhost:8080') > -1
+        const isLocalStatic =
+          !isLocalMarp && document.location.toString().indexOf('localhost') > -1
 
-        if (isLocal) {
+        if (isLocalMarp) {
           setQuery(
             {},
             {
@@ -328,7 +332,9 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
                 ...location,
                 pathname:
                   parts.join('/') +
-                  (pageSpaceX === 0 ? '/' : `/${pageSpaceX + 1}`),
+                  (pageSpaceX === 0
+                    ? '/'
+                    : `/${pageSpaceX + 1}${isLocalStatic ? '.html' : ''}`),
               },
               setter: (...args) => history.pushState(...args),
             }
