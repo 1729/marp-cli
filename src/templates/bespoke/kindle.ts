@@ -38,10 +38,16 @@ const epubBodyForHeaderAndPage = (header, headerIndex, page) => {
 
 <body>
   <h1 class="title">${HTMLEncode(header.title)}</h1>
+    ${
+      header.figure !== null
+        ? `
     <div class="figure">
       <img src="${header.figure}">
-    </img>
-  </div>
+      </img>
+    </div>
+  `
+        : ''
+    }
   ${page.el.outerHTML}
 </body>
 </html>

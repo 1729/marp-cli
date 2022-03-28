@@ -63,6 +63,8 @@ export function buildCompactHeadersAndPages(
       for (let i = 0; i < contentEl.children.length; i++) {
         let pageEl = contentEl.children[i]
 
+        if (figureEl && figureEl.parentElement === pageEl) continue
+
         if (
           pageEl.tagName !== 'P' &&
           pageEl.tagName !== 'UL' &&
