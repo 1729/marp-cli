@@ -193,7 +193,12 @@ function buildMobileDOM(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
       if (iframe !== null) {
         const el = document.createElement('iframe')
         el.setAttribute('src', iframe)
-        el.setAttribute('style', 'width: 100%; aspect-ratio: 1024 / 768')
+        el.setAttribute(
+          'style',
+          'width: 80%; height: 80%; aspect-ratio: 16 / 9; flex: 0;'
+        )
+        el.setAttribute('width', '1024')
+        el.setAttribute('height', '768')
         el.setAttribute('allow', 'microphone; camera; vr; speaker;')
         const node = pageEl.children[0].cloneNode(true)
         node.appendChild(el)
