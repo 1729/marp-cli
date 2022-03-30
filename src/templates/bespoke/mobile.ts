@@ -187,10 +187,20 @@ function buildMobileDOM(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
   }
 
   for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-    const { el: pageEl, full } = pages[pageIndex]
+    const { el: pageEl, full, iframe } = pages[pageIndex]
 
     if (full) {
-      pageView.appendChild(pageEl.children[0].cloneNode(true))
+      if (iframe !== null) {
+        const el = document.createElement('iframe')
+        el.setAttribute('src', iframe)
+        el.setAttribute('style', 'width: 100%; aspect-ratio: 1024 / 768')
+        el.setAttribute('allow', 'microphone; camera; vr; speaker;')
+        const node = pageEl.children[0].cloneNode(true)
+        node.appendChild(el)
+        pageView.appendChild(node)
+      } else {
+        pageView.appendChild(pageEl.children[0].cloneNode(true))
+      }
     } else {
       const sectionEl = document.createElement('section')
       sectionEl.classList.add(`${classPrefix}mobile-page`)

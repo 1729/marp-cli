@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { Element, Marpit, Options, RenderResult } from '@marp-team/marpit'
 import chapterPlugin from '../engine/chapter-plugin'
+import iframePlugin from '../engine/iframe-plugin'
 import listSplitPlugin from '../engine/list-split-plugin'
 import skipPlugin from '../engine/skip-plugin'
 import transitionPlugin from '../engine/transition-plugin'
@@ -96,6 +97,7 @@ export const bespoke: Template<TemplateBespokeOption> = async (opts) => {
     value: (marpit) => {
       marpit.use(listSplitPlugin)
       marpit.use(skipPlugin)
+      marpit.use(iframePlugin)
       marpit.use(chapterPlugin)
       if (opts.transition) marpit.use(transitionPlugin)
     },

@@ -10,6 +10,7 @@ export interface PageEntry {
   page: number
   slide: number
   full: boolean
+  iframe: string | null
   chapter: string | null
 }
 
@@ -40,11 +41,15 @@ export function buildCompactHeadersAndPages(
 
     const figureEl = slide.querySelector('section img')
     const contentEl = slide.querySelector('section p')?.parentElement
+    const iframe =
+      slide
+        .querySelector('section[data-iframe]')
+        ?.getAttribute('data-iframe') || null
 
     // Remove svg scaling hack from marp-svg-polyfill that breaks safari
     slide.querySelector('section')?.removeAttribute('style')
 
-    if (contentEl) {
+    if (contentEl && !iframe) {
       // Slide with figure
       const figure = figureEl ? figureEl.getAttribute('src') : null
 
@@ -147,6 +152,7 @@ export function buildCompactHeadersAndPages(
             el: pageEl.cloneNode(true) as HTMLElement,
             slide: slideIndex,
             page,
+            iframe: null,
             full: false,
             chapter,
           })
@@ -160,6 +166,7 @@ export function buildCompactHeadersAndPages(
               el: sublist,
               slide: slideIndex,
               page,
+              iframe: null,
               full: false,
               chapter,
             })
@@ -171,6 +178,7 @@ export function buildCompactHeadersAndPages(
             el: pageEl.cloneNode(true) as HTMLElement,
             slide: slideIndex,
             page,
+            iframe: null,
             full: false,
             chapter,
           })
@@ -185,6 +193,7 @@ export function buildCompactHeadersAndPages(
         el: slide.children[0].cloneNode(true) as HTMLElement,
         slide: slideIndex,
         page: 0,
+        iframe,
         full: true,
         chapter,
       })
