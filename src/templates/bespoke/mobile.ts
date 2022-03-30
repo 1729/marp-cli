@@ -348,8 +348,8 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
                 pathname:
                   parts.join('/') +
                   (pageSpaceX === 0
-                    ? '/'
-                    : `/${pageSpaceX + 1}${isLocalStatic ? '.html' : ''}`),
+                    ? '/b'
+                    : `/b/${pageSpaceX + 1}${isLocalStatic ? '.html' : ''}`),
               },
               setter: (...args) => history.pushState(...args),
             }
