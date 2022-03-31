@@ -97,9 +97,31 @@ const bespokeKindle = (deck) => {
 
       const filename = decodeURIComponent(figure).replace(/^assets\//, '')
 
-      const res = await fetch(figure)
-      const buf = await res.arrayBuffer()
-      textAssets.file(filename, buf)
+      try {
+        const res = await fetch(figure)
+        const buf = await res.arrayBuffer()
+        textAssets.file(filename, buf)
+      } catch (e) {
+        console.warn(`Failed to fetch ${figure}`)
+
+        if (filename.endsWith('svg')) {
+          const EMPTY_SVG = `<?xml version="1.0" encoding="utf-8"?>
+            <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+              <rect width="100%" height="100%" fill="white" />
+            </svg>`
+          textAssets.file(filename, EMPTY_SVG)
+        } else if (filename.endsWith('png')) {
+          const EMPTY_PNG = atob(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
+          )
+          textAssets.file(filename, EMPTY_PNG)
+        } else if (filename.endsWith('gif')) {
+          const EMPTY_GIF = atob(
+            'R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='
+          )
+          textAssets.file(filename, EMPTY_GIF)
+        }
+      }
     }
 
     const fontRules: Array<string> = []
@@ -127,11 +149,15 @@ const bespokeKindle = (deck) => {
                   ''
                 )
 
-                const res = await fetch(path)
-                const buf = await res.arrayBuffer()
-                styleAssets.file(filename, buf)
+                try {
+                  const res = await fetch(path)
+                  const buf = await res.arrayBuffer()
+                  styleAssets.file(filename, buf)
 
-                fontRules.push(fontFaceRule.cssText)
+                  fontRules.push(fontFaceRule.cssText)
+                } catch (e) {
+                  console.warn('failed to fetch', path)
+                }
               }
             }
           }
