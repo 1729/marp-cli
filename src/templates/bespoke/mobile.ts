@@ -40,6 +40,8 @@ function pageIndexFromLocation(): number {
   }
 }
 
+let initialMarpRootValue: number | null = null
+
 // Adds the longest block of text to the temporary sizer div to determine what
 // is the minimum font size needed to avoid vertical scrolling across the whole
 // book. The function then replaces the CSS variable --marpit-root-font-size appropriately
@@ -84,7 +86,7 @@ function computeTextFontSize(pages) {
   )
   if (pagesEl === null) return
 
-  let bestSize = 0
+  let bestSize = 8
 
   console.log(
     `Computing font size based on:\nChapter: ${chapter}\nSnippet: "${longest.substring(
@@ -93,8 +95,11 @@ function computeTextFontSize(pages) {
     )}"\nLength: ${longest.length}`
   )
 
-  for (const fontSize of [28, 26, 24, 20, 18, 16, 14, 12, 8]) {
-    sizerContent.setAttribute('style', `font-size: ${fontSize}px`)
+  for (const fontSize of [28, 26, 24, 22, 20, 18, 16, 14, 12, 8]) {
+    sizerContent.setAttribute(
+      'style',
+      `font-size: ${fontSize}px; padding-bottom: 92px;`
+    )
     sizerContent.innerText = longest
 
     if (sizer.scrollHeight <= sizer.clientHeight) {
@@ -113,14 +118,17 @@ function computeTextFontSize(pages) {
 
       if (rule !== null) {
         if (rule.cssText && varRegex.test(rule.cssText)) {
-          const currentValue = parseInt(
-            rule.style
-              .getPropertyValue('--marpit-root-font-size')
-              .replace('px', ''),
-            10
-          )
+          if (initialMarpRootValue === null) {
+            initialMarpRootValue = parseInt(
+              rule.style
+                .getPropertyValue('--marpit-root-font-size')
+                .replace('px', ''),
+              10
+            )
+          }
           // Set var to a ratio adjusted value based on the computed font size
-          const newValue = Math.floor(currentValue / 16) * bestSize
+          const newValue = Math.floor(initialMarpRootValue / 16) * bestSize
+
           rule.style.setProperty('--marpit-root-font-size', `${newValue}px`)
         }
       }
