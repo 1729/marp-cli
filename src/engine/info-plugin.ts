@@ -8,6 +8,7 @@ export interface EngineInfo {
   theme: string | undefined
   title: string | undefined
   url: string | undefined
+  baseURI: string | undefined
 }
 
 export const engineInfo = Symbol()
@@ -30,6 +31,7 @@ export default function infoPlugin(md: any) {
       keywords: globalDirectives.marpCLIKeywords,
       title: globalDirectives.marpCLITitle,
       url: globalDirectives.marpCLIURL,
+      baseURI: globalDirectives.marpCLIBaseURI,
       size: {
         height: themeSet.getThemeProp(theme, 'heightPixel'),
         width: themeSet.getThemeProp(theme, 'widthPixel'),

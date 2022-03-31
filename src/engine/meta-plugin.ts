@@ -48,6 +48,17 @@ export default function metaPlugin({ marpit }: { marpit: Marpit }) {
 
       return { marpCLIURL: v }
     },
+    baseURI: (v) => {
+      // URL validation
+      try {
+        if (v) new URL(v)
+      } catch (e: unknown) {
+        warn(`Specified canonical URL is ignored since invalid URL: ${v}`)
+        return {}
+      }
+
+      return { marpCLIBaseURI: v }
+    },
   })
 
   // TODO: Add rule to fill meta from content of slide deck when directives are not defined.
