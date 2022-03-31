@@ -668,6 +668,7 @@ $progress-height: 5px;
     pointer-events: none;
     align-items: flex-end;
     z-index: 7;
+    user-select: none;
 
     &.toggled {
       background-color: #fff;
