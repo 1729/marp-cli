@@ -2,6 +2,8 @@ extends ../layout.pug
 
 prepend head
   style!= bespoke.css
+  if baseURI
+    base(href=baseURI)
 
 prepend deck
   if bespoke.progress
