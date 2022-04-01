@@ -355,8 +355,8 @@ function runRAF(headers: Array<HeaderEntry>, pages: Array<PageEntry>) {
                 ...location,
                 pathname:
                   pageSpaceX === 0
-                    ? '/b'
-                    : `/b/${pageSpaceX + 1}${isLocalStatic ? '.html' : ''}`,
+                    ? '/'
+                    : `/${pageSpaceX + 1}${isLocalStatic ? '.html' : ''}`,
               },
               setter: (...args) => history.pushState(...args),
             }
