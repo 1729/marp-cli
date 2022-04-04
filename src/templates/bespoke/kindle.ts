@@ -223,7 +223,7 @@ const bespokeKindle = (deck) => {
           id: `page-${headerIndex}_${pageIndex}`,
           filename: `Text/${headerIndex}_${pageIndex}.xhtml`,
           filetype: 'application/xhtml+xml',
-          inSpine: pageIndex === header.pages[0],
+          inSpine: true,
         })
 
         if (!page.full) {
@@ -339,7 +339,7 @@ ${fontRules.join('\n')}
           <itemref idref="cover" linear="no" />
           ${metaItems
             .filter((item) => item.inSpine)
-            .map((item) => `<itemref idref="${item.id}"/>`)
+            .map((item) => `<itemref idref="${item.id}" linear="yes"/>`)
             .join('\n')}
         </spine>
         <guide>
