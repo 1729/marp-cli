@@ -14,6 +14,7 @@ interface MetaItemEntry {
   id: string
   filename: string
   filetype: string
+  inSpine: boolean
 }
 
 const tmpDiv = document.createElement('div')
@@ -32,7 +33,7 @@ const epubBodyForHeaderAndPage = (header, headerIndex, page) => {
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <link rel="stylesheet" href="../Styles/styles.css"></link>
+  <link type="text/css" rel="stylesheet" href="../Styles/styles.css"/>
   <title></title>
 </head>
 
@@ -42,13 +43,12 @@ const epubBodyForHeaderAndPage = (header, headerIndex, page) => {
       header.figure !== null
         ? `
     <div class="figure">
-      <img src="${header.figure}">
-      </img>
+      <img src="${header.figure}" alt="${header.title} Figure"/>
     </div>
   `
         : ''
     }
-  ${page.el.outerHTML}
+  ${page.el.outerHTML.replace(/<br>/g, '<br/>')}
 </body>
 </html>
   `
@@ -62,8 +62,18 @@ const bespokeKindle = (deck) => {
   window['downloadKindlePackage'] = async () => {
     const ext = new Date().getTime()
     const zip = new JSZip()
+    zip.file('mimetype', 'application/epub+zip')
     const oebps = zip.folder('OEBPS')
-    const metainf = oebps.folder('META-INF')
+    const metainf = zip.folder('META-INF')
+    metainf.file(
+      'container.xml',
+      `<?xml version="1.0" encoding="utf-8"?>
+      <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+        <rootfiles>
+          <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml" />
+        </rootfiles>
+      </container>`
+    )
     const text = oebps.folder('Text')
     const textAssets = text.folder('assets')
     const styles = oebps.folder('Styles')
@@ -82,9 +92,10 @@ const bespokeKindle = (deck) => {
       id: `cover`,
       filename: 'Text/cover.xhtml',
       filetype: 'application/xhtml+xml',
+      inSpine: false, // Kind of a lie, but it's the only way to get the cover to show up as non-linear
     })
 
-    text.file('cover.xhtml', '<html><body>Cover</body></html>')
+    text.file('cover.xhtml', '<html><head></head><body>Cover</body></html>')
 
     const figures: Array<string | null> = [
       ...['assets/origins.svg'],
@@ -181,7 +192,7 @@ const bespokeKindle = (deck) => {
           subpoints = []
 
           navPoints.push({
-            id: `${headerIndex}.${pageIndex}`,
+            id: `page-${headerIndex}_${pageIndex}`,
             playOrder: playOrder++,
             label: `${page.chapter}`,
             contentSrc: `Text/${headerIndex}_${pageIndex}.xhtml`,
@@ -190,7 +201,7 @@ const bespokeKindle = (deck) => {
         } else if (j === 0) {
           // Emit entry for each header
           subpoints.push({
-            id: `${headerIndex}.${pageIndex}`,
+            id: `page-${headerIndex}_${pageIndex}`,
             playOrder: playOrder++,
             label: `${header.pageTitle}`,
             contentSrc: `Text/${headerIndex}_${pageIndex}.xhtml`,
@@ -202,6 +213,7 @@ const bespokeKindle = (deck) => {
           id: `page-${headerIndex}_${pageIndex}`,
           filename: `Text/${headerIndex}_${pageIndex}.xhtml`,
           filetype: 'application/xhtml+xml',
+          inSpine: pageIndex === header.pages[0],
         })
 
         if (!page.full) {
@@ -212,7 +224,10 @@ const bespokeKindle = (deck) => {
         } else {
           text.file(
             `${headerIndex}_${pageIndex}.xhtml`,
-            `<html><body>${page.el.outerHTML}</body></html>`
+            `<html><head></head><body>${page.el.outerHTML.replace(
+              /<br>/g,
+              '<br/>'
+            )}</body></html>`
           )
         }
       }
@@ -222,6 +237,7 @@ const bespokeKindle = (deck) => {
       id: `styles`,
       filename: 'Styles/styles.css',
       filetype: 'text/css',
+      inSpine: false,
     })
 
     styles.file(
@@ -260,8 +276,7 @@ ${fontRules.join('\n')}
       </navPoint>`
     }
 
-    const toc = `
-      <?xml version="1.0" encoding="utf-8"?>
+    const toc = `<?xml version="1.0" encoding="utf-8"?>
       <!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"
          "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">
       <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">
@@ -284,21 +299,9 @@ ${fontRules.join('\n')}
     `
 
     oebps.file('toc.ncx', toc)
-    zip.file('mimetype', 'application/epub+zip')
-    metainf.file(
-      'container.xml',
-      `
-      <?xml version="1.0" encoding="utf-8"?>
-      <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
-        <rootfiles>
-          <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml" />
-        </rootfiles>
-      </container>`
-    )
     oebps.file(
       'content.opf',
-      `
-      <?xml version="1.0" encoding="utf-8"?>
+      `<?xml version="1.0" encoding="utf-8"?>
       <package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="BookId">
         <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
           <dc:title>${title}</dc:title>
@@ -310,15 +313,23 @@ ${fontRules.join('\n')}
         </metadata>
         <manifest>
           <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />
-          ${metaItems.map(
-            (metaItem) => `
+          ${metaItems
+            .map(
+              (metaItem) => `
             <item id="${metaItem.id}" href="${metaItem.filename}" media-type="${metaItem.filetype}" />`
-          )}
+            )
+            .join('\n')}
         </manifest>
         <spine toc="ncx">
           <itemref idref="cover" linear="no" />
+          ${metaItems
+            .filter((item) => item.inSpine)
+            .map((item) => `<itemref idref="${item.id}"/>`)
+            .join('\n')}
         </spine>
-        <reference href="Text/cover.xhtml" type="cover" title="Cover" />
+        <guide>
+          <reference href="Text/cover.xhtml" type="cover" title="Cover" />
+        </guide>
       </package>
 `
     )
