@@ -19,6 +19,14 @@ interface MetaItemEntry {
 
 const tmpDiv = document.createElement('div')
 
+function cleanHTML(h) {
+  return h
+    .replace(/<br>/g, '<br/>')
+    .replace(/<(\/?)section([^>]*)>/g, '<$1div>')
+    .replace(/<(\/?)foreignObject([^>]*)>/g, '<$1div>')
+    .replace(/<(\/?)svg([^>]*)>/g, '<$1div>')
+}
+
 function HTMLEncode(s) {
   const el = tmpDiv
   el.innerText = el.textContent = s
@@ -28,13 +36,12 @@ function HTMLEncode(s) {
 
 const epubBodyForHeaderAndPage = (header, headerIndex, page) => {
   return `<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
-  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <link type="text/css" rel="stylesheet" href="../Styles/styles.css"/>
-  <title></title>
+  <title>${header.pageTitle}</title>
 </head>
 
 <body>
@@ -48,7 +55,7 @@ const epubBodyForHeaderAndPage = (header, headerIndex, page) => {
   `
         : ''
     }
-  ${page.el.outerHTML.replace(/<br>/g, '<br/>')}
+  ${cleanHTML(page.el.outerHTML)}
 </body>
 </html>
   `
@@ -95,7 +102,10 @@ const bespokeKindle = (deck) => {
       inSpine: false, // Kind of a lie, but it's the only way to get the cover to show up as non-linear
     })
 
-    text.file('cover.xhtml', '<html><head></head><body>Cover</body></html>')
+    text.file(
+      'cover.xhtml',
+      `<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>${title}</title></head><body><p>Cover</p></body></html>`
+    )
 
     const figures: Array<string | null> = [
       ...['assets/origins.svg'],
@@ -222,12 +232,17 @@ const bespokeKindle = (deck) => {
             epubBodyForHeaderAndPage(header, headerIndex, page)
           )
         } else {
+          const html: Array<string> = []
+          for (let i = 0; i < page.el.children.length; i++) {
+            html.push(cleanHTML(page.el.children[i].outerHTML))
+          }
+
           text.file(
             `${headerIndex}_${pageIndex}.xhtml`,
-            `<html><head></head><body>${page.el.outerHTML.replace(
-              /<br>/g,
-              '<br/>'
-            )}</body></html>`
+            `<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+            <html xmlns="http://www.w3.org/1999/xhtml"><head><title>${
+              header.pageTitle
+            }</title></head><body>${html.join('\n')}</body></html>`
           )
         }
       }
