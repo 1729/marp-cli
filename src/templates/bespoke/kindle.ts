@@ -186,6 +186,37 @@ const bespokeKindle = (deck) => {
       }
     }
 
+    let tocLis = ''
+
+    metaItems.push({
+      id: `toc`,
+      filename: 'Text/toc.xhtml',
+      filetype: 'application/xhtml+xml',
+      inSpine: true,
+    })
+
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i]
+      const headerIndex = i
+
+      for (let j = 0; j < header.pages.length; j++) {
+        const pageIndex = header.pages[j]
+        if (pageIndex === 0) continue // Skip cover page
+
+        const page = pages[pageIndex]
+
+        if (page.chapter) {
+          tocLis += `<li><a href="Text/${headerIndex}_${pageIndex}.xhtml">${page.chapter}</a></li>`
+        }
+      }
+    }
+
+    text.file(
+      'toc.xhtml',
+      `<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+            <html xmlns="http://www.w3.org/1999/xhtml"><head><title>Table of Contents</title></head><body><p class="toc"><ol>${tocLis}</ol></p></body></html>`
+    )
+
     let subpoints: Array<NavPoint> = []
 
     for (let i = 0; i < headers.length; i++) {
@@ -337,6 +368,7 @@ ${fontRules.join('\n')}
         </manifest>
         <spine toc="ncx">
           <itemref idref="cover" linear="no" />
+          <itemref idref="toc" linear="no" />
           ${metaItems
             .filter((item) => item.inSpine)
             .map((item) => `<itemref idref="${item.id}" linear="yes"/>`)
