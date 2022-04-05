@@ -206,7 +206,7 @@ const bespokeKindle = (deck) => {
         const page = pages[pageIndex]
 
         if (page.chapter) {
-          tocLis += `<li><a href="Text/${headerIndex}_${pageIndex}.xhtml">${page.chapter}</a></li>`
+          tocLis += `<li><a href="${headerIndex}_${pageIndex}.xhtml">${page.chapter}</a></li>`
         }
       }
     }
